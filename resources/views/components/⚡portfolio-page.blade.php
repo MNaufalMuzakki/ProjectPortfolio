@@ -80,6 +80,99 @@ new class extends Component
         Skill::find($id)?->delete();
     }
 
+    // --- EXPERIENCE CRUD ---
+    public $exp_role = '';
+    public $exp_company = '';
+    public $exp_period = '';
+    public $exp_description = '';
+
+    public function addExperience()
+    {
+        $this->validate([
+            'exp_role' => 'required',
+            'exp_company' => 'required',
+            'exp_period' => 'required',
+        ]);
+
+        Experience::create([
+            'role' => $this->exp_role,
+            'company' => $this->exp_company,
+            'period' => $this->exp_period,
+            'description' => $this->exp_description,
+        ]);
+
+        $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description']);
+        session()->flash('msg_exp', 'Experience ditambahkan!');
+    }
+
+    public function deleteExperience($id)
+    {
+        Experience::find($id)?->delete();
+    }
+
+    // --- EDUCATION CRUD ---
+    public $edu_type = 'education';
+    public $edu_title = '';
+    public $edu_subtitle = '';
+    public $edu_description = '';
+
+    public function addEducation()
+    {
+        $this->validate([
+            'edu_title' => 'required',
+            'edu_subtitle' => 'required',
+        ]);
+
+        Education::create([
+            'type' => $this->edu_type,
+            'title' => $this->edu_title,
+            'subtitle' => $this->edu_subtitle,
+            'description' => $this->edu_description,
+        ]);
+
+        $this->reset(['edu_title', 'edu_subtitle', 'edu_description']);
+        session()->flash('msg_edu', 'Education ditambahkan!');
+    }
+
+    public function deleteEducation($id)
+    {
+        Education::find($id)?->delete();
+    }
+
+    // --- PROJECTS CRUD ---
+    public $proj_title = '';
+    public $proj_category = 'Web Development';
+    public $proj_description = '';
+    public $proj_url = '';
+    public $proj_tech_stack = '';
+    public $proj_editing_id = null;
+
+    public function addProject()
+    {
+        $this->validate([
+            'proj_title' => 'required',
+            'proj_description' => 'required',
+        ]);
+
+        $techArray = array_filter(array_map('trim', explode(',', $this->proj_tech_stack)));
+
+        Project::create([
+            'title' => $this->proj_title,
+            'category' => $this->proj_category,
+            'description' => $this->proj_description,
+            'url' => $this->proj_url ?: null,
+            'tech_stack' => array_values($techArray),
+        ]);
+
+        $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_tech_stack']);
+        session()->flash('msg_proj', 'Project ditambahkan!');
+    }
+
+    public function deleteProject($id)
+    {
+        Project::find($id)?->delete();
+    }
+
     // --- DATA PROVIDERS ---
     #[Computed]
     public function profile()
@@ -308,36 +401,59 @@ new class extends Component
                 <div class="grid md:grid-cols-2 gap-8">
                     <!-- Edit Experience -->
                     <div class="p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
-                        <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-3 mb-4">
                             <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Experience</h2>
-                            <button class="bg-amber-500 text-slate-900 px-3 py-1.5 rounded-xl text-sm font-bold hover:bg-amber-600"><i class="fa-solid fa-plus"></i> Tambah</button>
+                            @if (session()->has('msg_exp'))
+                                <span class="text-green-400 text-sm font-bold">{{ session('msg_exp') }}</span>
+                            @endif
                         </div>
-                        <div class="space-y-4">
+                        <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-4 space-y-3">
+                            <input type="text" wire:model="exp_role" placeholder="Role / Jabatan *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" wire:model="exp_company" placeholder="Perusahaan / Organisasi *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                                <input type="text" wire:model="exp_period" placeholder="Periode (Jan 2024 - Skrg) *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                            </div>
+                            <textarea wire:model="exp_description" placeholder="Deskripsi singkat..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none h-20"></textarea>
+                            <button wire:click="addExperience" class="w-full bg-teal-500 text-slate-900 py-2 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah</button>
+                        </div>
+                        <div class="space-y-3">
                             @foreach($this->experiences as $exp)
-                                <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4">
-                                    <div class="flex justify-between mb-2">
-                                        <h3 class="text-white font-bold">{{ $exp->role }}</h3>
-                                        <button class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                                <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 class="text-white font-bold text-sm">{{ $exp->role }}</h3>
+                                        <p class="text-xs text-slate-400">{{ $exp->company }} | {{ $exp->period }}</p>
                                     </div>
-                                    <p class="text-sm text-slate-400">{{ $exp->company }} | {{ $exp->period }}</p>
+                                    <button wire:click="deleteExperience({{ $exp->id }})" wire:confirm="Yakin hapus experience ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             @endforeach
                         </div>
                     </div>
                     <!-- Edit Education -->
                     <div class="p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
-                        <div class="flex justify-between items-center mb-6">
+                        <div class="flex items-center gap-3 mb-4">
                             <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Education</h2>
-                            <button class="bg-amber-500 text-slate-900 px-3 py-1.5 rounded-xl text-sm font-bold hover:bg-amber-600"><i class="fa-solid fa-plus"></i> Tambah</button>
+                            @if (session()->has('msg_edu'))
+                                <span class="text-green-400 text-sm font-bold">{{ session('msg_edu') }}</span>
+                            @endif
                         </div>
-                        <div class="space-y-4">
+                        <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-4 space-y-3">
+                            <select wire:model="edu_type" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                                <option value="education">Education</option>
+                                <option value="certification">Certification</option>
+                            </select>
+                            <input type="text" wire:model="edu_title" placeholder="Nama Institusi / Sertifikasi *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                            <input type="text" wire:model="edu_subtitle" placeholder="Periode / Jurusan *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                            <textarea wire:model="edu_description" placeholder="Deskripsi lengkap..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none h-20"></textarea>
+                            <button wire:click="addEducation" class="w-full bg-teal-500 text-slate-900 py-2 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah</button>
+                        </div>
+                        <div class="space-y-3">
                             @foreach($this->educations as $edu)
-                                <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4">
-                                    <div class="flex justify-between mb-2">
-                                        <h3 class="text-white font-bold">{{ $edu->title }}</h3>
-                                        <button class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                                <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 class="text-white font-bold text-sm">{{ $edu->title }}</h3>
+                                        <p class="text-xs text-slate-400">{{ $edu->subtitle }}</p>
                                     </div>
-                                    <p class="text-sm text-slate-400">{{ $edu->subtitle }}</p>
+                                    <button wire:click="deleteEducation({{ $edu->id }})" wire:confirm="Yakin hapus education ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             @endforeach
                         </div>
@@ -406,22 +522,46 @@ new class extends Component
 
             @if($editMode)
                 <div class="p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-3 mb-6">
                         <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Projects</h2>
-                        <button class="bg-amber-500 text-slate-900 px-4 py-2 rounded-xl text-sm font-bold hover:bg-amber-600 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Project</button>
+                        @if (session()->has('msg_proj'))
+                            <span class="text-green-400 text-sm font-bold">{{ session('msg_proj') }}</span>
+                        @endif
                     </div>
-                    
+
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-3">
+                            <input type="text" wire:model="proj_title" placeholder="Judul Project *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                            <select wire:model="proj_category" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                                <option value="Web Development">Web Development</option>
+                                <option value="Game Development">Game Development</option>
+                                <option value="Videography">Videography</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input type="text" wire:model="proj_url" placeholder="Link URL (opsional)" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                            <input type="text" wire:model="proj_tech_stack" placeholder="Tech Stack (pisah dengan koma: Laravel, PHP)" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <textarea wire:model="proj_description" placeholder="Deskripsi project *" class="flex-1 w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none"></textarea>
+                            <button wire:click="addProject" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Project</button>
+                        </div>
+                    </div>
+
                     <div class="space-y-4">
                         @foreach($this->projects as $project)
                             <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
                                 <div>
                                     <h3 class="text-white font-bold">{{ $project->title }}</h3>
                                     <p class="text-sm text-slate-400">{{ $project->category }}</p>
+                                    @if($project->tech_stack)
+                                        <div class="flex flex-wrap gap-1 mt-1">
+                                            @foreach($project->tech_stack as $tech)
+                                                <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">{{ $tech }}</span>
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
-                                <div class="flex gap-2">
-                                    <button class="text-blue-500 hover:text-blue-400 px-3 py-1"><i class="fa-solid fa-edit"></i></button>
-                                    <button class="text-red-500 hover:text-red-400 px-3 py-1"><i class="fa-solid fa-trash"></i></button>
-                                </div>
+                                <button wire:click="deleteProject({{ $project->id }})" wire:confirm="Yakin hapus project ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         @endforeach
                     </div>
