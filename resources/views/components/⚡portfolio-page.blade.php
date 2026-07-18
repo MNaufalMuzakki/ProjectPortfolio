@@ -532,121 +532,27 @@ new class extends Component
                             <input type="text" wire:model="skill_icon" placeholder="fa-brands fa-react" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none mb-3">
                             
                             <!-- Quick Select Icons -->
-                            <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800 space-y-3">
+                            @if($this->usedIcons->isNotEmpty())
+                            <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800 space-y-2">
                                 <div class="flex flex-wrap justify-between items-center text-[10px] text-slate-400 font-semibold tracking-wider gap-2">
-                                    <span>PILIH IKON CEPAT</span>
+                                    <span>IKON YANG PERNAH DIGUNAKAN</span>
                                     <span>Cari ikon lainnya di: <a href="https://fontawesome.com/search?o=r&m=free" target="_blank" class="text-amber-500 hover:text-amber-400 font-bold underline">FontAwesome Free Search <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a></span>
                                 </div>
-                                
-                                <div>
-                                    <span class="text-[9px] text-slate-550 block mb-1 font-bold uppercase tracking-wider">Ikon Populer:</span>
-                                    <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-9 gap-1.5">
-                                        <!-- Web -->
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-php')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="PHP">
-                                            <i class="fa-brands fa-php text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">PHP</span>
+                                <div class="flex flex-wrap gap-1.5 pt-1">
+                                    @foreach($this->usedIcons as $used)
+                                        <button type="button" wire:click="$set('skill_icon', '{{ $used->icon }}')" class="px-2 py-1 bg-slate-800 hover:bg-amber-500/20 hover:text-amber-400 rounded text-[10px] text-slate-300 border border-slate-700 flex items-center gap-1.5 transition-all animate-fade-in" title="Gunakan {{ $used->icon }}">
+                                            <i class="{{ $used->icon }} text-xs"></i>
+                                            <span>{{ $used->name }}</span>
                                         </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-laravel')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Laravel">
-                                            <i class="fa-brands fa-laravel text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Laravel</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-html5')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="HTML5">
-                                            <i class="fa-brands fa-html5 text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">HTML</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-css3-alt')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="CSS3">
-                                            <i class="fa-brands fa-css3-alt text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">CSS</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-js')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="JavaScript">
-                                            <i class="fa-brands fa-js text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">JS</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-react')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="React">
-                                            <i class="fa-brands fa-react text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">React</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-database')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Database">
-                                            <i class="fa-solid fa-database text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">DB</span>
-                                        </button>
-                                        
-                                        <!-- Game -->
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-gamepad')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Gamepad/Unity">
-                                            <i class="fa-solid fa-gamepad text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Gamepad</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-book-open')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Book/RenPy">
-                                            <i class="fa-solid fa-book-open text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Book</span>
-                                        </button>
-
-                                        <!-- Creative -->
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-figma')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Figma">
-                                            <i class="fa-brands fa-figma text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Figma</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-video')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Video / Premiere">
-                                            <i class="fa-solid fa-video text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Video</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-clapperboard')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Clapperboard">
-                                            <i class="fa-solid fa-clapperboard text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Clapper</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-palette')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Palette/Art">
-                                            <i class="fa-solid fa-palette text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Art</span>
-                                        </button>
-
-                                        <!-- Management -->
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-robot')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="AI/Robot">
-                                            <i class="fa-solid fa-robot text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">AI Tools</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-file-excel')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Excel">
-                                            <i class="fa-solid fa-file-excel text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Excel</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-file-word')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Word">
-                                            <i class="fa-solid fa-file-word text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Word</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-vial')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Testing">
-                                            <i class="fa-solid fa-vial text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Testing</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-users')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Teamwork">
-                                            <i class="fa-solid fa-users text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">Team</span>
-                                        </button>
-                                        
-                                        <!-- IDE / Tools -->
-                                        <button type="button" wire:click="$set('skill_icon', 'devicon-visualstudio-plain colored')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Visual Studio">
-                                            <i class="devicon-visualstudio-plain colored text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">VS Studio</span>
-                                        </button>
-                                        <button type="button" wire:click="$set('skill_icon', 'devicon-vscode-plain colored')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="VS Code">
-                                            <i class="devicon-vscode-plain colored text-sm"></i>
-                                            <span class="text-[8px] truncate max-w-full">VS Code</span>
-                                        </button>
-                                    </div>
+                                    @endforeach
                                 </div>
-
-                                @if($this->usedIcons->isNotEmpty())
-                                    <div class="border-t border-slate-800/80 pt-2">
-                                        <span class="text-[9px] text-slate-550 block mb-1.5 font-bold uppercase tracking-wider">Ikon yang Pernah Digunakan:</span>
-                                        <div class="flex flex-wrap gap-1.5">
-                                            @foreach($this->usedIcons as $used)
-                                                <button type="button" wire:click="$set('skill_icon', '{{ $used->icon }}')" class="px-2 py-1 bg-slate-800 hover:bg-amber-500/20 hover:text-amber-400 rounded text-[10px] text-slate-300 border border-slate-700 flex items-center gap-1.5 transition-all animate-fade-in" title="Gunakan {{ $used->icon }}">
-                                                    <i class="{{ $used->icon }} text-xs"></i>
-                                                    <span>{{ $used->name }}</span>
-                                                </button>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endif
                             </div>
+                            @else
+                            <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800 flex justify-between items-center text-[10px] text-slate-400 font-semibold tracking-wider">
+                                <span>Belum ada ikon di database.</span>
+                                <span>Cari ikon di: <a href="https://fontawesome.com/search?o=r&m=free" target="_blank" class="text-amber-500 hover:text-amber-400 font-bold underline">FontAwesome Free Search <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a></span>
+                            </div>
+                            @endif
                         </div>
                     </div>
 
