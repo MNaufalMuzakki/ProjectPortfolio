@@ -1,58 +1,126 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Portfolio Project — Technical Test Fullstack Intern
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Personal portfolio landing page dengan CRUD konten di halaman yang sama (View Mode & Edit Mode), dibangun dengan **Laravel + Livewire + Tailwind CSS**.
 
-## About Laravel
+## Fitur yang Sudah Dibuat
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Satu halaman, dua mode:** View (landing publik) dan Edit (CRUD inline), tanpa dashboard terpisah
+- **Data Diri (Profile):** update nama, role, bio, kontak, avatar
+- **CRUD Keahlian (Skills)**
+- **CRUD Pengalaman (Experiences)**
+- **CRUD Pendidikan & Sertifikasi (Educations)**
+- **CRUD Proyek (Projects)** — termasuk tech stack & thumbnail opsional
+- Konten tersimpan di database; perubahan langsung terlihat di landing page
+- Validasi server-side (Livewire)
+- Migration + seeder data contoh
+- UI responsif (desktop & mobile)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack & Metode
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Teknologi / Metode | Dipakai di mana |
+|--------------------|-----------------|
+| **Laravel 13** | Backend utama (`composer.json`) |
+| **Livewire 4** | Semua CRUD + toggle View/Edit di `resources/views/components/⚡portfolio-page.blade.php` |
+| **Blade** | Layout di `resources/views/welcome.blade.php` |
+| **Tailwind CSS 4** | Styling (`resources/css/app.css` + Vite plugin) |
+| **Alpine.js** | Toggle tech stack proyek (terbundel di Livewire) |
+| **Vite** | Build asset frontend (`vite.config.js`) |
+| **SQLite / MySQL** | Database via `.env` |
+| **Eloquent + SoftDeletes** | Model di `app/Models/` |
+| **Migration + Seeder** | `database/migrations/`, `database/seeders/DatabaseSeeder.php` |
+| **Validasi server-side** | `$this->validate()` di method Livewire |
+| **File upload** | Avatar & gambar proyek via `WithFileUploads` + Storage |
+| **Computed properties** | `#[Computed]` untuk load data profile/skills/dll |
 
-## Learning Laravel
+**Pola arsitektur:** tidak ada controller terpisah. Satu route `/` → Blade layout → satu komponen Livewire yang menangani View Mode & Edit Mode + CRUD semua entitas.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Cara Install & Menjalankan (Lokal)
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### Prasyarat
 
-## Agentic Development
+- PHP 8.3+
+- Composer
+- Node.js & npm
+- (Opsional) Laragon / XAMPP jika memakai MySQL
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Langkah Setup
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clone repository
+git clone <url-repo-kamu>
+cd PortfolioProject
 
-php artisan boost:install
+# 2. Install dependency PHP
+composer install
+
+# 3. Salin file environment
+cp .env.example .env
+
+# 4. Generate app key
+php artisan key:generate
+
+# 5. Siapkan database
+# Default memakai SQLite — buat file database:
+# Windows (PowerShell): New-Item database/database.sqlite -ItemType File
+# macOS/Linux: touch database/database.sqlite
+
+# 6. Migrasi + seeder (data contoh)
+php artisan migrate --seed
+
+# 7. Link storage (untuk avatar & gambar proyek)
+php artisan storage:link
+
+# 8. Install & build frontend assets
+npm install
+npm run build
+# atau untuk development: npm run dev
+
+# 9. Jalankan server
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Buka browser: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
-## Contributing
+### Jika ingin memakai MySQL
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Edit `.env`:
 
-## Code of Conduct
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=portfolio
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Lalu buat database `portfolio` di MySQL, kemudian jalankan lagi:
 
-## Security Vulnerabilities
+```bash
+php artisan migrate --seed
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Cara Pakai Aplikasi
 
-## License
+1. **View Mode (default):** tampilan landing page portfolio (read-only).
+2. Klik tombol **Edit Content** di navbar untuk masuk **Edit Mode**.
+3. Di Edit Mode, setiap section menampilkan form CRUD (tambah / ubah / hapus).
+4. Klik **Lihat Web** untuk kembali ke tampilan bersih View Mode.
+5. Login / autentikasi **tidak wajib** untuk tugas ini.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Struktur Database (ringkas)
+
+- `profiles` — data diri (1 record)
+- `skills` — keahlian
+- `experiences` — pengalaman
+- `education` — pendidikan & sertifikasi
+- `projects` — proyek portfolio
+
+Relasi: satu profile memiliki banyak skills / experiences / educations / projects (konten ditampilkan dari masing-masing tabel).
+
+## Catatan
+
+- Pastikan folder `storage` dan `bootstrap/cache` writable.
+- Setelah upload avatar/gambar proyek, pastikan `php artisan storage:link` sudah dijalankan.
+- Commit history dibuat bertahap sesuai ketentuan penilaian Git.

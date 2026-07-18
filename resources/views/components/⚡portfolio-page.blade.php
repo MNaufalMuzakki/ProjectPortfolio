@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -82,10 +82,31 @@ new class extends Component
     {
         $this->editMode = !$this->editMode;
     }
-
-    // --- PROFILE CRUD ---
     public function saveProfile()
     {
+        $this->validate([
+            'profile_name' => 'required|string|max:255',
+            'profile_role' => 'required|string|max:255',
+            'profile_bio' => 'required|string|max:2000',
+            'profile_email' => 'required|email|max:255',
+            'profile_github' => 'nullable|url|max:255',
+            'profile_linkedin' => 'nullable|url|max:255',
+            'profile_whatsapp' => 'nullable|string|max:50',
+            'profile_instagram' => 'nullable|string|max:100',
+            'profile_address' => 'nullable|string|max:255',
+            'profile_avatar' => 'nullable|image|max:2048',
+        ], [
+            'profile_name.required' => 'Nama lengkap wajib diisi.',
+            'profile_role.required' => 'Role / subtitle wajib diisi.',
+            'profile_bio.required' => 'Bio wajib diisi.',
+            'profile_email.required' => 'Email wajib diisi.',
+            'profile_email.email' => 'Format email tidak valid.',
+            'profile_github.url' => 'URL GitHub tidak valid.',
+            'profile_linkedin.url' => 'URL LinkedIn tidak valid.',
+            'profile_avatar.image' => 'Avatar harus berupa gambar.',
+            'profile_avatar.max' => 'Ukuran avatar maksimal 2MB.',
+        ]);
+
         $profile = Profile::first();
         if ($profile) {
             $data = [
@@ -114,8 +135,6 @@ new class extends Component
             session()->flash('msg_profile', 'Profil berhasil disimpan!');
         }
     }
-
-    // --- SKILLS CRUD ---
     public function addSkill()
     {
         $this->validate(['skill_name' => 'required', 'skill_icon' => 'required', 'skill_category' => 'required']);
@@ -150,8 +169,6 @@ new class extends Component
     {
         Skill::find($id)?->delete();
     }
-
-    // --- EXPERIENCE CRUD ---
     public function addExperience()
     {
         $this->validate(['exp_role' => 'required', 'exp_company' => 'required', 'exp_period' => 'required']);
@@ -187,8 +204,6 @@ new class extends Component
     {
         Experience::find($id)?->delete();
     }
-
-    // --- EDUCATION CRUD ---
     public function addEducation()
     {
         $this->validate(['edu_title' => 'required', 'edu_subtitle' => 'required']);
@@ -256,8 +271,6 @@ new class extends Component
     {
         Education::find($id)?->delete();
     }
-
-    // --- PROJECTS CRUD ---
     public function addProject()
     {
         $this->validate(['proj_title' => 'required|min:2', 'proj_description' => 'required|min:5', 'proj_image' => 'nullable|image|max:2048']);
@@ -303,8 +316,6 @@ new class extends Component
     {
         Project::find($id)?->delete();
     }
-
-    // --- DATA PROVIDERS ---
     #[Computed]
     public function profile()
     {
@@ -348,18 +359,13 @@ new class extends Component
 ?>
 
 <div>
-    <!-- Background Glow Orbs for Premium Vibe (Hidden in light mode) -->
     <div class="no-print absolute top-10 left-10 w-[300px] h-[300px] bg-brand-500 glow-orb dark:block hidden animate-pulse-slow"></div>
     <div class="no-print absolute top-[40%] right-10 w-[350px] h-[350px] bg-electric-500 glow-orb dark:block hidden animate-pulse-slow"></div>
     <div class="no-print absolute bottom-20 left-[20%] w-[300px] h-[300px] bg-brand-500 glow-orb dark:block hidden animate-pulse-slow"></div>
 
-    <!-- ==========================================
-      1. HEADER / NAVIGATION BAR
-    ========================================== -->
-    <header class="no-print fixed top-0 left-0 w-full z-50 transition-all duration-300" id="mainHeader">
+<header class="no-print fixed top-0 left-0 w-full z-50 transition-all duration-300" id="mainHeader">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border {{ $editMode ? 'border-amber-500/50 shadow-lg shadow-amber-500/10' : 'border-slate-200 dark:border-slate-800/80 shadow-lg' }} rounded-2xl px-6 py-3 flex items-center justify-between transition-all duration-300">
-                <!-- Brand Logo / Monogram -->
                 <a href="#hero" class="flex items-center gap-2 group">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-tr {{ $editMode ? 'from-amber-500 to-orange-500' : 'from-brand-500 to-electric-500' }} flex items-center justify-center font-extrabold text-white text-lg shadow-lg group-hover:scale-105 transition-all duration-300">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
@@ -370,63 +376,49 @@ new class extends Component
                         @if($editMode)
                             <span class="text-amber-500">Mode</span> Edit Konten
                         @else
-                            <span class="text-brand-500">Muhammad</span> Naufal<span class="text-brand-500"> Muzakki</span>
+                            <span class="text-brand-500">{{ $this->profile?->name ?? 'Portfolio' }}</span>
                         @endif
                     </span>
                 </a>
-
-                <!-- Desktop Navigation Links -->
                 <nav class="hidden md:flex items-center gap-8">
-                    <a href="#hero" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">Home</a>
-                    <a href="#skills" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">Skills</a>
-                    <a href="#experience" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">Experience</a>
-                    <a href="#education" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">Education</a>
-                    <a href="#portfolio" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">Portfolio</a>
+                    <a href="#hero" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">{{ $editMode ? 'Beranda' : 'Home' }}</a>
+                    <a href="#skills" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">{{ $editMode ? 'Keahlian' : 'Skills' }}</a>
+                    <a href="#experience" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">{{ $editMode ? 'Pengalaman' : 'Experience' }}</a>
+                    <a href="#education" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">{{ $editMode ? 'Pendidikan' : 'Education' }}</a>
+                    <a href="#portfolio" class="nav-link text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-brand-500 dark:hover:text-brand-500 transition-colors duration-300">{{ $editMode ? 'Proyek' : 'Portfolio' }}</a>
                 </nav>
-
-                <!-- Actions: Edit Mode, Theme Toggle & Mobile Menu Btn -->
                 <div class="flex items-center gap-3">
-                    <!-- Edit Mode Button -->
                     <button wire:click="toggleEditMode" class="px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-2 transition-all duration-300 shadow-md {{ $editMode ? 'bg-amber-500 text-slate-950 hover:bg-amber-600' : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-350 hover:text-brand-500 border border-slate-200 dark:border-slate-800' }}">
                         @if($editMode)
                             <i class="fa-solid fa-eye"></i> Lihat Web
                         @else
-                            <i class="fa-solid fa-pen-to-square"></i> Edit Konten
+                            <i class="fa-solid fa-pen-to-square"></i> Edit Content
                         @endif
                     </button>
-
-                    <!-- Theme Toggle Button -->
                     <button id="themeToggle" class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-400 hover:text-brand-500 hover:border-brand-500/30 active:scale-95 transition-all duration-300" aria-label="Toggle Theme">
                         <i class="fa-solid fa-moon dark:hidden text-lg text-indigo-500"></i>
                         <i class="fa-solid fa-sun hidden dark:block text-lg text-amber-400"></i>
                     </button>
-
-                    <!-- Mobile Menu Button -->
                     <button id="mobileMenuBtn" class="md:hidden w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-350 hover:text-brand-500 active:scale-95 transition-all duration-300" aria-label="Open Menu">
                         <i class="fa-solid fa-bars text-base" id="menuIcon"></i>
                     </button>
                 </div>
             </div>
         </div>
-
-        <!-- Mobile Navigation Menu (Dropdown) -->
         <div class="md:hidden hidden px-4 sm:px-6 mb-4" id="mobileMenu">
             <div class="bg-white/95 dark:bg-slate-950/95 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 flex flex-col gap-3 shadow-xl backdrop-blur-lg">
-                <a href="#hero" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">Home</a>
-                <a href="#skills" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">Skills</a>
-                <a href="#experience" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">Experience</a>
-                <a href="#education" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">Education</a>
-                <a href="#portfolio" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">Portfolio</a>
+                <a href="#hero" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">{{ $editMode ? 'Beranda' : 'Home' }}</a>
+                <a href="#skills" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">{{ $editMode ? 'Keahlian' : 'Skills' }}</a>
+                <a href="#experience" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">{{ $editMode ? 'Pengalaman' : 'Experience' }}</a>
+                <a href="#education" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">{{ $editMode ? 'Pendidikan' : 'Education' }}</a>
+                <a href="#portfolio" class="mobile-nav-link block px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-brand-500 transition-all duration-300">{{ $editMode ? 'Proyek' : 'Portfolio' }}</a>
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 relative z-10">
 
-        <!-- ==========================================
-          A. HERO SECTION
-        ========================================== -->
-        <section id="hero" class="py-6 md:py-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center lg:min-h-[75vh]">
+<section id="hero" class="py-6 md:py-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center lg:min-h-[75vh]">
             @if($editMode)
                 <div class="lg:col-span-12 w-full p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
                     <div class="flex justify-between items-center mb-6">
@@ -441,81 +433,80 @@ new class extends Component
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
                         <div class="space-y-4">
                             <div>
-                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Nama Lengkap</label>
-                                <input type="text" wire:model="profile_name" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Nama Lengkap *</label>
+                                <input type="text" wire:model="profile_name" placeholder="contoh: Nama Lengkap Kamu" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                @error('profile_name') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                             <div>
-                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Role / Subtitle</label>
-                                <input type="text" wire:model="profile_role" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Peran / Subjudul *</label>
+                                <input type="text" wire:model="profile_role" placeholder="contoh: Multimedia Engineering Technology" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                @error('profile_role') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="space-y-4">
                             <div>
-                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Bio / Deskripsi Ringkas</label>
-                                <textarea wire:model="profile_bio" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white h-[116px] focus:border-amber-500 outline-none transition-all resize-none"></textarea>
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Bio / Deskripsi Ringkas *</label>
+                                <textarea wire:model="profile_bio" placeholder="Tulis bio singkat tentang dirimu..." class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white h-[116px] focus:border-amber-500 outline-none transition-all resize-none"></textarea>
+                                @error('profile_bio') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
-                                <label class="text-sm font-semibold text-slate-400 mb-1 block">GitHub URL</label>
-                                <input type="text" wire:model="profile_github" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">URL GitHub</label>
+                                <input type="text" wire:model="profile_github" placeholder="https://github.com/..." class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                @error('profile_github') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                             <div>
-                                <label class="text-sm font-semibold text-slate-400 mb-1 block">LinkedIn URL</label>
-                                <input type="text" wire:model="profile_linkedin" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">URL LinkedIn</label>
+                                <input type="text" wire:model="profile_linkedin" placeholder="https://linkedin.com/in/..." class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                @error('profile_linkedin') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                             <div>
-                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Email</label>
-                                <input type="email" wire:model="profile_email" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Email *</label>
+                                <input type="email" wire:model="profile_email" placeholder="nama@email.com" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                @error('profile_email') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="text-sm font-semibold text-slate-400 mb-1 block">WhatsApp</label>
-                                <input type="text" wire:model="profile_whatsapp" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                <input type="text" wire:model="profile_whatsapp" placeholder="62812..." class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
                             </div>
                         </div>
                         <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="text-sm font-semibold text-slate-400 mb-1 block">Instagram</label>
-                                <input type="text" wire:model="profile_instagram" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                <input type="text" wire:model="profile_instagram" placeholder="@username" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
                             </div>
                             <div>
                                 <label class="text-sm font-semibold text-slate-400 mb-1 block">Lokasi / Domisili</label>
-                                <input type="text" wire:model="profile_address" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                <input type="text" wire:model="profile_address" placeholder="contoh: Bandung, Indonesia" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
                             </div>
                             <div>
                                 <label class="text-sm font-semibold text-slate-400 mb-1 block">Foto Profil (Avatar)</label>
                                 <div class="flex items-center gap-2">
                                     <input type="file" wire:model="profile_avatar" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-white hover:file:bg-slate-700 transition-all">
-                                    <div wire:loading wire:target="profile_avatar" class="text-xs text-amber-500 flex-shrink-0">Uploading...</div>
+                                    <div wire:loading wire:target="profile_avatar" class="text-xs text-amber-500 flex-shrink-0">Sedang mengupload...</div>
                                 </div>
+                                @error('profile_avatar') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
                 </div>
             @else
-                <!-- Left Branding Info -->
                 <div class="lg:col-span-7 flex flex-col items-start text-left order-2 lg:order-1">
-                    <!-- Mini Tag -->
                     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 text-xs font-extrabold tracking-widest uppercase mb-6 shadow-sm shadow-brand-500/5">
                         <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
-                        Telkom University Student
+                        {{ $this->profile?->role ?? 'Portfolio' }}
                     </div>
-
-                    <!-- Headline & Titles -->
                     <h1 class="text-3xl sm:text-5xl lg:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-teal-400 to-electric-500">{{ $this->profile?->name ?? 'Muhammad Naufal Muzakki' }}</span>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-teal-400 to-electric-500">{{ $this->profile?->name ?? 'Your Name' }}</span>
                     </h1>
                     
                     <h2 class="text-sm sm:text-base lg:text-lg font-bold text-slate-700 dark:text-slate-300 mt-4 tracking-wide font-mono flex items-center gap-2">
-                        <span class="text-brand-500 font-black">//</span> {{ $this->profile?->role ?? 'Multimedia Engineering Technology' }}
+                        <span class="text-brand-500 font-black">//</span> {{ $this->profile?->role ?? 'Your Role' }}
                     </h2>
-
-                    <!-- Main Summary text -->
                     <p class="text-sm sm:text-base text-slate-600 dark:text-slate-350 mt-6 leading-relaxed max-w-2xl text-left sm:text-justify">
-                        {{ $this->profile?->bio ?? 'A Multimedia Engineering student specializing in Web Development, Game Development, and Videography...' }}
+                        {{ $this->profile?->bio ?? 'Add your bio from Edit Content mode.' }}
                     </p>
-
-                    <!-- Call To Actions -->
                     <div class="flex flex-wrap items-center gap-4 mt-8 w-full sm:w-auto">
                         <a href="#portfolio" class="w-full sm:w-auto px-6 py-4 rounded-xl bg-brand-500 text-slate-950 font-bold text-sm text-center hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-brand-500/20 transition-all duration-300">
                             View Portfolio <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
@@ -532,40 +523,25 @@ new class extends Component
                         @endif
                     </div>
                 </div>
-
-                <!-- Right Avatar & Orbiting Graphic -->
                 <div class="lg:col-span-5 flex justify-center items-center relative py-6 order-1 lg:order-2">
-                    <!-- Circular Avatar Wrapper with Rotating Neon Rings -->
                     <div class="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] rounded-full p-2 flex items-center justify-center">
-                        
-                        <!-- Glowing background orbits -->
                         <div class="absolute inset-0 rounded-full border border-dashed border-slate-300 dark:border-slate-800/80 animate-spin-slow"></div>
                         <div class="absolute -inset-4 rounded-full border border-dashed border-brand-500/20 animate-spin-slow" style="animation-direction: reverse; animation-duration: 20s;"></div>
-                        
-                        <!-- Neon Glow Outer Rings -->
                         <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-brand-500 to-electric-500 blur-sm opacity-60 animate-pulse-slow"></div>
-                        
-                        <!-- Avatar Image Frame -->
                         <div class="relative w-full h-full rounded-full bg-slate-950 overflow-hidden border-4 border-slate-900 z-10 flex items-center justify-center">
-                            
-                            <!-- Profile Pic -->
                             @if($this->profile?->avatar_path)
-                                <img src="{{ Storage::url($this->profile->avatar_path) }}" alt="{{ $this->profile?->name ?? 'Muhammad Naufal Muzakki' }}" class="w-full h-full object-cover">
+                                <img src="{{ Storage::url($this->profile->avatar_path) }}" alt="{{ $this->profile?->name ?? 'Profile' }}" class="w-full h-full object-cover">
                             @else
-                                <img src="profile.jpg" alt="Muhammad Naufal Muzakki" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                                <img src="profile.jpg" alt="{{ $this->profile?->name ?? 'Profile' }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
                             @endif
-                            
-                            <!-- Fallback design -->
                             <div class="hidden w-full h-full bg-gradient-to-br from-slate-900 to-slate-950 flex flex-col items-center justify-center p-6 text-center select-none">
                                 <div class="w-16 h-16 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 flex items-center justify-center mb-3">
                                     <i class="fa-solid fa-user-astronaut text-3xl animate-float"></i>
                                 </div>
-                                <span class="font-extrabold text-sm sm:text-base text-slate-100 tracking-wider">MUHAMMAD NAUFAL</span>
-                                <span class="text-xs font-mono text-slate-500 uppercase mt-1">Multimedia Engineer</span>
+                                <span class="font-extrabold text-sm sm:text-base text-slate-100 tracking-wider uppercase">{{ $this->profile?->name ?? 'Profile' }}</span>
+                                <span class="text-xs font-mono text-slate-500 uppercase mt-1">{{ $this->profile?->role ?? 'Portfolio' }}</span>
                             </div>
                         </div>
-
-                        <!-- Floating Tech Badges -->
                         <div class="no-print absolute top-0 right-4 w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center text-brand-500 shadow-lg animate-float z-20 hover:scale-110 active:scale-95 transition-all duration-300" style="animation-delay: 0s;" title="Web Developer">
                             <i class="fa-solid fa-code text-base"></i>
                         </div>
@@ -580,13 +556,9 @@ new class extends Component
             @endif
         </section>
 
-        <!-- ==========================================
-          B. TECHNICAL SKILL STACK (HARD SKILLS)
-        ========================================== -->
-        <section id="skills" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
-            <!-- Section Header -->
+<section id="skills" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
             <div class="flex flex-col items-start mb-8">
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-2">Skills & Expertise</h2>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-2">{{ $editMode ? 'Keahlian & Kompetensi' : 'Skills & Expertise' }}</h2>
                 <div class="w-16 h-1 bg-gradient-to-r from-brand-500 to-electric-500 rounded-full mt-3"></div>
             </div>
 
@@ -594,14 +566,12 @@ new class extends Component
                 <div class="p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
                     <div class="flex justify-between items-center mb-6">
                         <div class="flex items-center gap-3">
-                            <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Skills</h2>
+                            <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Keahlian</h2>
                             @if (session()->has('msg_skill'))
                                 <span class="text-green-400 text-sm font-bold">{{ session('msg_skill') }}</span>
                             @endif
                         </div>
                     </div>
-                    
-                    <!-- Form Tambah Skill -->
                     <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-700 mb-6 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                         <div class="lg:col-span-4 space-y-4">
                             <div>
@@ -623,14 +593,12 @@ new class extends Component
                                     <button wire:click="cancelEditSkill" class="px-4 bg-slate-700 text-slate-300 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-600 transition-colors"><i class="fa-solid fa-xmark"></i> Batal</button>
                                 </div>
                             @else
-                                <button wire:click="addSkill" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Skill</button>
+                                <button wire:click="addSkill" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Keahlian</button>
                             @endif
                         </div>
                         <div class="lg:col-span-8 w-full">
                             <label class="text-xs text-slate-400 block mb-1">Class Icon (FontAwesome)</label>
                             <input type="text" wire:model="skill_icon" placeholder="fa-brands fa-react" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none mb-3">
-                            
-                            <!-- Quick Select Icons -->
                             @if($this->usedIcons->isNotEmpty())
                             <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800 space-y-2">
                                 <div class="flex flex-wrap justify-between items-center text-[10px] text-slate-400 font-semibold tracking-wider gap-2">
@@ -674,7 +642,6 @@ new class extends Component
                     </div>
                 </div>
             @else
-                <!-- Skills Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     @foreach(['Web Development', 'Game Development', 'Multimedia & Creative', 'Management & Supporting'] as $cat)
                         @php
@@ -713,7 +680,7 @@ new class extends Component
                                         <i class="{{ $skill->icon }} text-sm"></i> {{ $skill->name }}
                                     </span>
                                 @empty
-                                    <span class="text-xs text-slate-500 italic">No skills listed yet</span>
+                                    <span class="text-xs text-slate-500 italic">No skills listed yet.</span>
                                 @endforelse
                             </div>
                         </div>
@@ -722,19 +689,16 @@ new class extends Component
             @endif
         </section>
 
-        <!-- ==========================================
-          C. EXPERIENCE
-        ========================================== -->
-        <section id="experience" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
+<section id="experience" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
             <div class="flex flex-col items-start mb-8">
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-2">Experience</h2>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-2">{{ $editMode ? 'Pengalaman' : 'Experience' }}</h2>
                 <div class="w-16 h-1 bg-gradient-to-r from-brand-500 to-electric-500 rounded-full mt-3"></div>
             </div>
 
             @if($editMode)
                 <div class="p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
                     <div class="flex items-center gap-3 mb-4">
-                        <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Experience</h2>
+                        <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Pengalaman</h2>
                         @if (session()->has('msg_exp'))
                             <span class="text-green-400 text-sm font-bold">{{ session('msg_exp') }}</span>
                         @endif
@@ -764,7 +728,7 @@ new class extends Component
                                 </div>
                                 <div class="flex gap-2">
                                     <button wire:click="editExperience({{ $exp->id }})" class="text-amber-400 hover:text-amber-300 transition-colors"><i class="fa-solid fa-pen text-sm"></i></button>
-                                    <button wire:click="deleteExperience({{ $exp->id }})" wire:confirm="Yakin hapus experience ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
+                                    <button wire:click="deleteExperience({{ $exp->id }})" wire:confirm="Yakin hapus pengalaman ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
                                 </div>
                             </div>
                         @endforeach
@@ -791,26 +755,22 @@ new class extends Component
                             </div>
                         </div>
                     @empty
-                        <div class="text-center text-slate-500 italic py-4">No experience entries found</div>
+                        <div class="text-center text-slate-500 italic py-4">No experience listed yet.</div>
                     @endforelse
                 </div>
             @endif
         </section>
 
-        <!-- ==========================================
-          D. EDUCATION & CERTIFICATIONS
-        ========================================== -->
-        <section id="education" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
-            <!-- Section Header -->
+<section id="education" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
             <div class="flex flex-col items-start mb-8">
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-2">Education & Certifications</h2>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-2">{{ $editMode ? 'Pendidikan & Sertifikasi' : 'Education & Certifications' }}</h2>
                 <div class="w-16 h-1 bg-gradient-to-r from-brand-500 to-electric-500 rounded-full mt-3"></div>
             </div>
 
             @if($editMode)
                 <div class="p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
                     <div class="flex items-center gap-3 mb-4">
-                        <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Education & Certifications</h2>
+                        <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Pendidikan & Sertifikasi</h2>
                         @if (session()->has('msg_edu'))
                             <span class="text-green-400 text-sm font-bold">{{ session('msg_edu') }}</span>
                         @endif
@@ -915,7 +875,7 @@ new class extends Component
                                 </div>
                                 <div class="flex gap-2">
                                     <button wire:click="editEducation({{ $edu->id }})" class="text-amber-400 hover:text-amber-300 transition-colors"><i class="fa-solid fa-pen text-sm"></i></button>
-                                    <button wire:click="deleteEducation({{ $edu->id }})" wire:confirm="Yakin hapus education ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
+                                    <button wire:click="deleteEducation({{ $edu->id }})" wire:confirm="Yakin hapus entri ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
                                 </div>
                             </div>
                         @endforeach
@@ -923,7 +883,6 @@ new class extends Component
                 </div>
             @else
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:items-stretch items-start">
-                    <!-- Education column (Left) -->
                     <div class="lg:col-span-5 flex flex-col lg:h-full">
                         <h3 class="text-sm font-black uppercase text-slate-550 dark:text-slate-500 tracking-wider mb-4">Education History</h3>
                         
@@ -976,12 +935,10 @@ new class extends Component
                                     @endif
                                 </div>
                             @empty
-                                <div class="text-slate-500 italic">No education entries found</div>
+                                <div class="text-slate-500 italic">No education history found.</div>
                             @endforelse
                         </div>
                     </div>
-
-                    <!-- Certification column (Right) -->
                     <div class="lg:col-span-7 flex flex-col lg:h-full">
                         <h3 class="text-sm font-black uppercase text-slate-550 dark:text-slate-500 tracking-wider mb-4">Professional Credentials</h3>
                         
@@ -1031,7 +988,7 @@ new class extends Component
                                     </div>
                                 </div>
                             @empty
-                                <div class="text-slate-550 dark:text-slate-500 italic">No certifications found</div>
+                                <div class="text-slate-550 dark:text-slate-500 italic">No certifications found.</div>
                             @endforelse
                         </div>
                     </div>
@@ -1039,34 +996,27 @@ new class extends Component
             @endif
         </section>
 
-        <!-- ==========================================
-          E. PROJECTS PORTFOLIO
-        ========================================== -->
-        <section id="portfolio" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
-            <!-- Section Header -->
+<section id="portfolio" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
             <div class="mb-8">
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Projects Portfolio</h2>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{{ $editMode ? 'Portofolio Proyek' : 'Projects Portfolio' }}</h2>
                 <div class="w-16 h-1 bg-gradient-to-r from-brand-500 to-electric-500 rounded-full mt-3"></div>
             </div>
 
             @if($editMode)
                 <div class="p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
                     <div class="flex items-center gap-3 mb-6">
-                        <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Projects</h2>
+                        <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Proyek</h2>
                         @if (session()->has('msg_proj'))
                             <span class="text-green-400 text-sm font-bold">{{ session('msg_proj') }}</span>
                         @endif
                     </div>
 
                     <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-700 mb-6 space-y-4">
-                        <!-- 0. Nama Project -->
                         <div>
-                            <label class="text-xs text-slate-400 block mb-1.5">Nama Project *</label>
+                            <label class="text-xs text-slate-400 block mb-1.5">Nama Proyek *</label>
                             <input type="text" wire:model="proj_title" placeholder="contoh: Web Informasi Himpunan, Game Puzzle 2D, Video Dokumentasi Wisuda..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
                             @error('proj_title') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                         </div>
-
-                        <!-- 1. Pilih Bidang -->
                         <div>
                             <label class="text-xs text-slate-400 block mb-1.5">Pilih Bidang <span class="text-slate-600">(ditampilkan sebagai badge di pojok kanan atas card)</span></label>
                             <div class="flex flex-wrap gap-2">
@@ -1082,8 +1032,6 @@ new class extends Component
                                 @endforeach
                             </div>
                         </div>
-
-                        <!-- 2. Pilih Teknologi dari Skills - Alpine.js untuk real-time toggle -->
                         <div
                             x-data="{
                                 selected: @entangle('proj_selected_skills'),
@@ -1095,9 +1043,9 @@ new class extends Component
                                 isSelected(name) { return this.selected.includes(name); }
                             }"
                         >
-                            <label class="text-xs text-slate-400 block mb-1.5">Teknologi yang Dipakai <span class="text-slate-600">(dari Skills & Expertise)</span></label>
+                            <label class="text-xs text-slate-400 block mb-1.5">Teknologi yang Dipakai <span class="text-slate-600">(dari Keahlian & Kompetensi)</span></label>
                             @if($this->skills->isEmpty())
-                                <p class="text-xs text-slate-500 italic">Belum ada skills. Tambahkan dulu di bagian Skills & Expertise.</p>
+                                <p class="text-xs text-slate-500 italic">Belum ada keahlian. Tambahkan dulu di bagian Keahlian & Kompetensi.</p>
                             @else
                                 <div class="flex flex-wrap gap-2 p-3 bg-slate-950/60 rounded-lg border border-slate-800">
                                     @foreach($this->skills as $skill)
@@ -1122,23 +1070,17 @@ new class extends Component
                                 </p>
                             @endif
                         </div>
-
-                        <!-- 3. Deskripsi -->
                         <div>
-                            <label class="text-xs text-slate-400 block mb-1.5">Deskripsi Project *</label>
-                            <textarea wire:model="proj_description" placeholder="Jelaskan tentang project ini, apa yang dibangun, dan tujuannya..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none h-24 resize-none"></textarea>
+                            <label class="text-xs text-slate-400 block mb-1.5">Deskripsi Proyek *</label>
+                            <textarea wire:model="proj_description" placeholder="Jelaskan tentang proyek ini, apa yang dibangun, dan tujuannya..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none h-24 resize-none"></textarea>
                             @error('proj_description') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                         </div>
-
-                        <!-- 4. Link -->
                         <div>
-                            <label class="text-xs text-slate-400 block mb-1.5">Link Project (Google Drive / GitHub / URL - Opsional)</label>
+                            <label class="text-xs text-slate-400 block mb-1.5">Link Proyek (Google Drive / GitHub / URL - Opsional)</label>
                             <input type="text" wire:model="proj_url" placeholder="contoh: https://github.com/... atau https://drive.google.com/..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
                         </div>
-
-                        <!-- 5. Gambar -->
                         <div>
-                            <label class="text-xs text-slate-400 block mb-1.5">Gambar / Thumbnail Project (Opsional, maks. 2MB)</label>
+                            <label class="text-xs text-slate-400 block mb-1.5">Gambar / Thumbnail Proyek (Opsional, maks. 2MB)</label>
                             <input type="file" wire:model="proj_image" accept="image/*" class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-teal-300 hover:file:bg-slate-700 file:cursor-pointer">
                             <div wire:loading wire:target="proj_image" class="text-xs text-amber-400 mt-1"><i class="fa-solid fa-spinner fa-spin"></i> Mengupload gambar...</div>
                         </div>
@@ -1149,7 +1091,7 @@ new class extends Component
                                 <button wire:click="cancelEditProject" class="px-4 bg-slate-700 text-slate-300 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-600 transition-all"><i class="fa-solid fa-xmark"></i> Batal</button>
                             </div>
                         @else
-                            <button wire:click="addProject" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 active:scale-95 transition-all"><i class="fa-solid fa-plus"></i> Tambah Project</button>
+                            <button wire:click="addProject" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 active:scale-95 transition-all"><i class="fa-solid fa-plus"></i> Tambah Proyek</button>
                         @endif
                     </div>
 
@@ -1167,14 +1109,13 @@ new class extends Component
                                 </div>
                                 <div class="flex gap-2">
                                     <button wire:click="editProject({{ $project->id }})" class="text-amber-400 hover:text-amber-300 transition-colors"><i class="fa-solid fa-pen text-sm"></i></button>
-                                    <button wire:click="deleteProject({{ $project->id }})" wire:confirm="Yakin hapus project ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
+                                    <button wire:click="deleteProject({{ $project->id }})" wire:confirm="Yakin hapus proyek ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
                                 </div>
                             </div>
                         @endforeach
                     </div>
                 </div>
             @else
-                <!-- Projects Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="projectsGrid">
                     @forelse($this->projects as $project)
                         @php
@@ -1182,12 +1123,10 @@ new class extends Component
                             $isGame = $project->category === 'Game Development';
                         @endphp
                         <div class="card-style bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/85 rounded-2xl overflow-hidden hover:border-brand-500/30 transition-all duration-300 flex flex-col group hover:shadow-lg">
-                            <!-- Project Thumbnail Wrapper -->
                             <div class="relative h-48 bg-slate-950 overflow-hidden flex items-center justify-center">
                                 @if($project->image_path)
                                     <img src="{{ Storage::url($project->image_path) }}" alt="{{ $project->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                                 @else
-                                    <!-- Elegant geometric fallback design -->
                                     <div class="w-full h-full bg-gradient-to-br {{ $isWeb ? 'from-brand-500/10' : ($isGame ? 'from-electric-500/10' : 'from-brand-500/10') }} to-slate-900 dark:to-slate-950 flex flex-col items-center justify-center p-6 text-center select-none">
                                         @if($isWeb)
                                             <i class="fa-solid fa-window-restore text-4xl text-brand-500/40 mb-2 animate-float"></i>
@@ -1199,21 +1138,15 @@ new class extends Component
                                         <span class="font-bold text-slate-300 dark:text-slate-350 text-xs sm:text-sm tracking-wider font-mono uppercase">{{ $project->category }}</span>
                                     </div>
                                 @endif
-                                
-                                <!-- Project Tag badge overlay -->
                                 <span class="absolute top-3 left-3 px-2.5 py-1 rounded bg-slate-950/80 border border-slate-850/80 text-xs font-mono font-bold tracking-wider {{ $isWeb ? 'text-brand-400' : ($isGame ? 'text-electric-500' : 'text-brand-400') }} uppercase select-none">
                                     {{ $project->category }}
                                 </span>
                             </div>
-
-                            <!-- Project Info -->
                             <div class="p-5 flex flex-col flex-grow">
                                 <h4 class="text-base font-extrabold text-slate-900 dark:text-slate-100 mb-2">{{ $project->title }}</h4>
                                 <p class="text-sm text-slate-650 dark:text-slate-350 leading-relaxed text-justify mb-4">
                                     {{ $project->description }}
                                 </p>
-                                
-                                <!-- Tech Tags -->
                                 @if($project->tech_stack)
                                     <div class="flex flex-wrap gap-1.5 mt-auto mb-5">
                                         @foreach($project->tech_stack as $tech)
@@ -1221,48 +1154,47 @@ new class extends Component
                                         @endforeach
                                     </div>
                                 @endif
-
-                                <!-- Link Button -->
                                 @if($project->url)
                                     <div class="mt-auto pt-4 border-t border-slate-200 dark:border-slate-850/60 no-print">
                                         <a href="{{ $project->url }}" target="_blank" class="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-lg bg-brand-500 text-slate-950 font-extrabold text-xs text-center uppercase tracking-wider hover:bg-brand-600 active:scale-95 transition-all duration-300">
-                                            <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i> Buka Link
+                                            <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i> Open Link
                                         </a>
                                     </div>
                                 @endif
                             </div>
                         </div>
                     @empty
-                        <div class="col-span-3 text-center text-slate-500 italic py-4">No projects listed yet</div>
+                        <div class="col-span-3 text-center text-slate-500 italic py-4">No projects listed yet.</div>
                     @endforelse
                 </div>
             @endif
         </section>
 
-        <!-- ==========================================
-          F. CONTACT SECTION (FOOTER)
-        ========================================== -->
-        <section id="contact" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
+<section id="contact" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <!-- Left Side Info -->
                 <div class="lg:col-span-5 flex flex-col items-start">
-                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Get In Touch</h2>
+                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{{ $editMode ? 'Hubungi Saya' : 'Get In Touch' }}</h2>
                     <div class="w-16 h-1 bg-gradient-to-r from-brand-500 to-electric-500 rounded-full mt-3 mb-6"></div>
                     
                     <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed text-justify mb-6 max-w-sm">
-                        Thank you for visiting! I am always open to discussing new multimedia project collaborations, interactive system developments, audio-visual production, or internship/contract opportunities. Please reach out to me through any of the contacts listed on the right.
+                        @if($editMode)
+                            Terima kasih sudah berkunjung! Saya terbuka untuk kolaborasi proyek multimedia, pengembangan sistem interaktif, produksi audio-visual, maupun peluang magang/kontrak. Silakan hubungi saya melalui kontak di sebelah kanan.
+                        @else
+                            Thank you for visiting! I am always open to discussing new multimedia project collaborations, interactive system developments, audio-visual production, or internship/contract opportunities. Please reach out to me through any of the contacts listed on the right.
+                        @endif
                     </p>
                     
                     <p class="text-xs sm:text-sm text-slate-500 italic max-w-sm">
-                        "Creating immersive digital experiences through design, development, and audio-visual precision."
+                        @if($editMode)
+                            "Menciptakan pengalaman digital yang imersif melalui desain, pengembangan, dan ketelitian audio-visual."
+                        @else
+                            "Creating immersive digital experiences through design, development, and audio-visual precision."
+                        @endif
                     </p>
                 </div>
-
-                <!-- Right Side Contact Cards Grid -->
                 <div class="lg:col-span-7 w-full">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        
-                        <!-- Email Card -->
+                        @if($this->profile?->email)
                         <div class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 flex items-center justify-between gap-4">
                             <div class="flex items-center gap-4 min-w-0 flex-grow">
                                 <div class="w-11 h-11 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-500 dark:text-brand-400 flex items-center justify-center flex-shrink-0">
@@ -1270,82 +1202,81 @@ new class extends Component
                                 </div>
                                 <div class="min-w-0 flex-grow">
                                     <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</span>
-                                    <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate" title="{{ $this->profile?->email ?? 'mnaufalmuza@student.telkomuniversity.ac.id' }}">{{ $this->profile?->email ?? 'mnaufalmuza@student.telkomuniversity.ac.id' }}</span>
+                                    <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate" title="{{ $this->profile->email }}">{{ $this->profile->email }}</span>
                                 </div>
                             </div>
-                            <!-- Copy Email Action -->
-                            <button id="copyEmailBtn" data-email="{{ $this->profile?->email ?? 'mnaufalmuza@student.telkomuniversity.ac.id' }}" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 flex items-center justify-center text-slate-400 hover:text-brand-500 hover:border-brand-500/30 active:scale-90 transition-all duration-200 flex-shrink-0 z-10 no-print" title="Copy Email">
+                            <button id="copyEmailBtn" data-email="{{ $this->profile->email }}" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 flex items-center justify-center text-slate-400 hover:text-brand-500 hover:border-brand-500/30 active:scale-90 transition-all duration-200 flex-shrink-0 z-10 no-print" title="{{ $editMode ? 'Salin Email' : 'Copy Email' }}">
                                 <i class="fa-regular fa-copy text-xs" id="copyEmailIcon"></i>
                             </button>
                         </div>
-
-                        <!-- WhatsApp Card -->
-                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $this->profile?->whatsapp ?? '628112120582') }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
+                        @endif
+                        @if($this->profile?->whatsapp)
+                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $this->profile->whatsapp) }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
                             <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-solid fa-phone text-base"></i>
                             </div>
                             <div class="min-w-0 flex-grow">
                                 <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">WhatsApp</span>
-                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">Chat on WhatsApp</span>
+                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ $editMode ? 'Chat via WhatsApp' : 'Chat on WhatsApp' }}</span>
                             </div>
                         </a>
-
-                        <!-- Instagram Card -->
-                        <a href="https://www.instagram.com/{{ ltrim($this->profile?->instagram ?? 'naufal_mauzakki', '@') }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-pink-500/40 hover:shadow-md hover:shadow-pink-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
+                        @endif
+                        @if($this->profile?->instagram)
+                        <a href="https://www.instagram.com/{{ ltrim($this->profile->instagram, '@') }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-pink-500/40 hover:shadow-md hover:shadow-pink-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
                             <div class="w-11 h-11 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-500 dark:text-pink-400 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-brands fa-instagram text-base"></i>
                             </div>
                             <div class="min-w-0 flex-grow">
                                 <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Instagram</span>
-                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ $this->profile?->instagram ?? '@naufal_mauzakki' }}</span>
+                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ $this->profile->instagram }}</span>
                             </div>
                         </a>
-
-                        <!-- LinkedIn Card -->
-                        <a href="{{ $this->profile?->linkedin ?? 'https://www.linkedin.com/in/muhammad-naufal-muzakki-962674292/' }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-electric-500/40 hover:shadow-md hover:shadow-electric-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
+                        @endif
+                        @if($this->profile?->linkedin)
+                        <a href="{{ $this->profile->linkedin }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-electric-500/40 hover:shadow-md hover:shadow-electric-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
                             <div class="w-11 h-11 rounded-xl bg-electric-500/10 border border-electric-500/20 text-electric-650 dark:text-electric-400 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-brands fa-linkedin-in text-base"></i>
                             </div>
                             <div class="min-w-0 flex-grow">
                                 <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">LinkedIn</span>
-                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ $this->profile?->name ?? 'Muhammad Naufal Muzakki' }}</span>
+                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ $this->profile?->name }}</span>
                             </div>
                         </a>
-
-                        <!-- GitHub Card -->
-                        <a href="{{ $this->profile?->github ?? 'https://github.com/MNaufalMuzakki' }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-slate-500/40 hover:shadow-md hover:shadow-slate-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
+                        @endif
+                        @if($this->profile?->github)
+                        <a href="{{ $this->profile->github }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-slate-500/40 hover:shadow-md hover:shadow-slate-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
                             <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-brands fa-github text-base"></i>
                             </div>
                             <div class="min-w-0 flex-grow">
                                 <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">GitHub</span>
-                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ basename($this->profile?->github ?? 'MNaufalMuzakki') }}</span>
+                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ basename($this->profile->github) }}</span>
                             </div>
                         </a>
-
-                        <!-- Domisili Card -->
+                        @endif
+                        @if($this->profile?->address)
                         <div class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 flex items-center gap-4">
                             <div class="w-11 h-11 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-500 dark:text-brand-400 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-solid fa-location-dot text-base"></i>
                             </div>
                             <div class="min-w-0 flex-grow">
-                                <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Location</span>
-                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-snug">{{ $this->profile?->address ?? 'Derwati, Rancasari, Bandung' }}</span>
+                                <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ $editMode ? 'Lokasi' : 'Location' }}</span>
+                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-snug">{{ $this->profile->address }}</span>
                             </div>
                         </div>
+                        @endif
 
                     </div>
                 </div>
             </div>
-
-            <!-- Simplified footer copyright -->
             <div class="mt-12 pt-8 border-t border-slate-200 dark:border-slate-900 text-center text-xs font-mono text-slate-500">
-                <p>&copy; 2026 Muhammad Naufal Muzakki. All Rights Reserved.</p>
+                <p>
+                    &copy; {{ date('Y') }} {{ $this->profile?->name ?? 'Portfolio' }}.
+                    {{ $editMode ? 'Hak Cipta Dilindungi.' : 'All Rights Reserved.' }}
+                </p>
             </div>
         </section>
     </main>
-
-    <!-- Scroll to Top Button -->
     <button id="scrollToTop" class="no-print fixed bottom-6 right-6 z-40 w-11 h-11 rounded-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-brand-500 hover:border-brand-500/30 active:scale-95 shadow-lg opacity-0 pointer-events-none translate-y-4 transition-all duration-300 flex items-center justify-center" aria-label="Scroll to Top">
         <i class="fa-solid fa-arrow-up text-base"></i>
     </button>
