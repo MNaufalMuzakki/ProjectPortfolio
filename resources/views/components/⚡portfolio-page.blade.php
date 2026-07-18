@@ -89,6 +89,11 @@ new class extends Component
         return $value === '' || $value === null ? null : $value;
     }
 
+    private function failGracefully(string $flashKey, string $message = 'Terjadi kesalahan. Silakan coba lagi.'): void
+    {
+        session()->flash($flashKey, $message);
+    }
+
     public function saveProfile()
     {
         $this->profile_github = $this->blankToNull($this->profile_github);
@@ -121,34 +126,40 @@ new class extends Component
             'profile_avatar.max' => 'Ukuran avatar maksimal 2MB.',
         ]);
 
-        $profile = Profile::first();
-        if (!$profile) {
-            session()->flash('msg_profile', 'Profil tidak ditemukan.');
-            return;
-        }
-
-        $data = [
-            'name' => $this->profile_name,
-            'role' => $this->profile_role,
-            'bio' => $this->profile_bio,
-            'github' => $this->profile_github,
-            'linkedin' => $this->profile_linkedin,
-            'email' => $this->profile_email,
-            'whatsapp' => $this->profile_whatsapp,
-            'instagram' => $this->profile_instagram,
-            'address' => $this->profile_address,
-        ];
-
-        if ($this->profile_avatar) {
-            if ($profile->avatar_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($profile->avatar_path);
+        try {
+            $profile = Profile::first();
+            if (!$profile) {
+                $this->failGracefully('msg_profile', 'Profil tidak ditemukan.');
+                return;
             }
-            $data['avatar_path'] = $this->profile_avatar->store('avatars', 'public');
-        }
 
-        $profile->update($data);
-        $this->profile_avatar = null;
-        session()->flash('msg_profile', 'Profil berhasil disimpan!');
+            $data = [
+                'name' => $this->profile_name,
+                'role' => $this->profile_role,
+                'bio' => $this->profile_bio,
+                'github' => $this->profile_github,
+                'linkedin' => $this->profile_linkedin,
+                'email' => $this->profile_email,
+                'whatsapp' => $this->profile_whatsapp,
+                'instagram' => $this->profile_instagram,
+                'address' => $this->profile_address,
+            ];
+
+            if ($this->profile_avatar) {
+                if ($profile->avatar_path) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($profile->avatar_path);
+                }
+                $data['avatar_path'] = $this->profile_avatar->store('avatars', 'public');
+            }
+
+            $profile->update($data);
+            $this->profile_avatar = null;
+            session()->flash('msg_profile', 'Profil berhasil disimpan!');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->profile_avatar = null;
+            $this->failGracefully('msg_profile', 'Gagal menyimpan profil. Coba lagi.');
+        }
     }
 
     private function skillRules(): array
@@ -173,37 +184,53 @@ new class extends Component
     public function addSkill()
     {
         $this->validate($this->skillRules(), $this->skillMessages());
-        Skill::create(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
-        $this->reset(['skill_name', 'skill_icon']);
-        session()->flash('msg_skill', 'Keahlian berhasil ditambahkan!');
+        try {
+            Skill::create(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
+            $this->reset(['skill_name', 'skill_icon']);
+            session()->flash('msg_skill', 'Keahlian berhasil ditambahkan!');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_skill', 'Gagal menambah keahlian. Coba lagi.');
+        }
     }
 
     public function editSkill($id)
     {
-        $skill = Skill::find($id);
-        if (!$skill) {
+        try {
+            $skill = Skill::find($id);
+            if (!$skill) {
+                $this->cancelEditSkill();
+                $this->failGracefully('msg_skill', 'Data keahlian tidak ditemukan.');
+                return;
+            }
+            $this->editingSkillId = $id;
+            $this->skill_name = $skill->name;
+            $this->skill_category = $skill->category;
+            $this->skill_icon = $skill->icon;
+        } catch (\Throwable $e) {
+            report($e);
             $this->cancelEditSkill();
-            session()->flash('msg_skill', 'Data keahlian tidak ditemukan.');
-            return;
+            $this->failGracefully('msg_skill', 'Gagal memuat data keahlian.');
         }
-        $this->editingSkillId = $id;
-        $this->skill_name = $skill->name;
-        $this->skill_category = $skill->category;
-        $this->skill_icon = $skill->icon;
     }
 
     public function updateSkill()
     {
         $this->validate($this->skillRules(), $this->skillMessages());
-        $skill = Skill::find($this->editingSkillId);
-        if (!$skill) {
-            $this->cancelEditSkill();
-            session()->flash('msg_skill', 'Data sudah dihapus, edit dibatalkan.');
-            return;
+        try {
+            $skill = Skill::find($this->editingSkillId);
+            if (!$skill) {
+                $this->cancelEditSkill();
+                $this->failGracefully('msg_skill', 'Data sudah dihapus, edit dibatalkan.');
+                return;
+            }
+            $skill->update(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
+            $this->reset(['skill_name', 'skill_icon', 'editingSkillId']);
+            session()->flash('msg_skill', 'Keahlian berhasil diperbarui!');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_skill', 'Gagal memperbarui keahlian. Coba lagi.');
         }
-        $skill->update(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
-        $this->reset(['skill_name', 'skill_icon', 'editingSkillId']);
-        session()->flash('msg_skill', 'Keahlian berhasil diperbarui!');
     }
 
     public function cancelEditSkill()
@@ -214,11 +241,16 @@ new class extends Component
 
     public function deleteSkill($id)
     {
-        if ((int) $this->editingSkillId === (int) $id) {
-            $this->cancelEditSkill();
-            session()->flash('msg_skill', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+        try {
+            if ((int) $this->editingSkillId === (int) $id) {
+                $this->cancelEditSkill();
+                session()->flash('msg_skill', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+            }
+            Skill::find($id)?->delete();
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_skill', 'Gagal menghapus keahlian. Coba lagi.');
         }
-        Skill::find($id)?->delete();
     }
 
     private function experienceRules(): array
@@ -243,48 +275,64 @@ new class extends Component
     public function addExperience()
     {
         $this->validate($this->experienceRules(), $this->experienceMessages());
-        Experience::create([
-            'role' => $this->exp_role,
-            'company' => $this->exp_company,
-            'period' => $this->exp_period,
-            'description' => $this->blankToNull($this->exp_description),
-        ]);
-        $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description']);
-        session()->flash('msg_exp', 'Pengalaman berhasil ditambahkan!');
+        try {
+            Experience::create([
+                'role' => $this->exp_role,
+                'company' => $this->exp_company,
+                'period' => $this->exp_period,
+                'description' => $this->blankToNull($this->exp_description),
+            ]);
+            $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description']);
+            session()->flash('msg_exp', 'Pengalaman berhasil ditambahkan!');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_exp', 'Gagal menambah pengalaman. Coba lagi.');
+        }
     }
 
     public function editExperience($id)
     {
-        $exp = Experience::find($id);
-        if (!$exp) {
+        try {
+            $exp = Experience::find($id);
+            if (!$exp) {
+                $this->cancelEditExperience();
+                $this->failGracefully('msg_exp', 'Data pengalaman tidak ditemukan.');
+                return;
+            }
+            $this->editingExpId = $id;
+            $this->exp_role = $exp->role;
+            $this->exp_company = $exp->company;
+            $this->exp_period = $exp->period;
+            $this->exp_description = $exp->description ?? '';
+        } catch (\Throwable $e) {
+            report($e);
             $this->cancelEditExperience();
-            session()->flash('msg_exp', 'Data pengalaman tidak ditemukan.');
-            return;
+            $this->failGracefully('msg_exp', 'Gagal memuat data pengalaman.');
         }
-        $this->editingExpId = $id;
-        $this->exp_role = $exp->role;
-        $this->exp_company = $exp->company;
-        $this->exp_period = $exp->period;
-        $this->exp_description = $exp->description ?? '';
     }
 
     public function updateExperience()
     {
         $this->validate($this->experienceRules(), $this->experienceMessages());
-        $exp = Experience::find($this->editingExpId);
-        if (!$exp) {
-            $this->cancelEditExperience();
-            session()->flash('msg_exp', 'Data sudah dihapus, edit dibatalkan.');
-            return;
+        try {
+            $exp = Experience::find($this->editingExpId);
+            if (!$exp) {
+                $this->cancelEditExperience();
+                $this->failGracefully('msg_exp', 'Data sudah dihapus, edit dibatalkan.');
+                return;
+            }
+            $exp->update([
+                'role' => $this->exp_role,
+                'company' => $this->exp_company,
+                'period' => $this->exp_period,
+                'description' => $this->blankToNull($this->exp_description),
+            ]);
+            $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description', 'editingExpId']);
+            session()->flash('msg_exp', 'Pengalaman berhasil diperbarui!');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_exp', 'Gagal memperbarui pengalaman. Coba lagi.');
         }
-        $exp->update([
-            'role' => $this->exp_role,
-            'company' => $this->exp_company,
-            'period' => $this->exp_period,
-            'description' => $this->blankToNull($this->exp_description),
-        ]);
-        $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description', 'editingExpId']);
-        session()->flash('msg_exp', 'Pengalaman berhasil diperbarui!');
     }
 
     public function cancelEditExperience()
@@ -294,11 +342,16 @@ new class extends Component
 
     public function deleteExperience($id)
     {
-        if ((int) $this->editingExpId === (int) $id) {
-            $this->cancelEditExperience();
-            session()->flash('msg_exp', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+        try {
+            if ((int) $this->editingExpId === (int) $id) {
+                $this->cancelEditExperience();
+                session()->flash('msg_exp', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+            }
+            Experience::find($id)?->delete();
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_exp', 'Gagal menghapus pengalaman. Coba lagi.');
         }
-        Experience::find($id)?->delete();
     }
 
     private function educationRules(): array
@@ -346,48 +399,59 @@ new class extends Component
         $this->edu_final_grade = $this->blankToNull($this->edu_final_grade);
 
         $this->validate($this->educationRules(), $this->educationMessages());
-        $metrics = $this->_buildEduMetrics();
-        $certLink = $this->edu_type !== 'education' ? $this->edu_certificate_link : null;
-        Education::create([
-            'type' => $this->edu_type,
-            'title' => $this->edu_title,
-            'subtitle' => $this->edu_subtitle,
-            'description' => $this->blankToNull($this->edu_description),
-            'metrics' => $metrics,
-            'certificate_link' => $certLink,
-        ]);
-        $this->_resetEduForm();
-        session()->flash('msg_edu', 'Pendidikan/Sertifikasi berhasil ditambahkan!');
+        try {
+            $metrics = $this->_buildEduMetrics();
+            $certLink = $this->edu_type !== 'education' ? $this->edu_certificate_link : null;
+            Education::create([
+                'type' => $this->edu_type,
+                'title' => $this->edu_title,
+                'subtitle' => $this->edu_subtitle,
+                'description' => $this->blankToNull($this->edu_description),
+                'metrics' => $metrics,
+                'certificate_link' => $certLink,
+            ]);
+            $this->_resetEduForm();
+            session()->flash('msg_edu', 'Pendidikan/Sertifikasi berhasil ditambahkan!');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_edu', 'Gagal menambah data. Coba lagi.');
+        }
     }
 
     public function editEducation($id)
     {
-        $edu = Education::find($id);
-        if (!$edu) {
-            $this->cancelEditEducation();
-            session()->flash('msg_edu', 'Data pendidikan/sertifikasi tidak ditemukan.');
-            return;
-        }
-        $this->editingEduId = $id;
-        $this->edu_type = $edu->type;
-        $this->edu_title = $edu->title;
-        $this->edu_subtitle = $edu->subtitle;
-        $this->edu_description = $edu->description ?? '';
-        $this->edu_certificate_link = $edu->certificate_link ?? '';
-        $this->edu_gpa = '';
-        $this->edu_eprt = '';
-        $this->edu_tak = '';
-        $this->edu_final_grade = '';
-        if ($edu->metrics) {
-            if (isset($edu->metrics['GPA'])) {
-                $this->edu_level = 'university';
-                $this->edu_gpa = $edu->metrics['GPA'] ?? '';
-                $this->edu_eprt = $edu->metrics['EPRT'] ?? '';
-                $this->edu_tak = $edu->metrics['TAK Score'] ?? '';
-            } else {
-                $this->edu_level = 'school';
-                $this->edu_final_grade = $edu->metrics['Final Grade'] ?? '';
+        try {
+            $edu = Education::find($id);
+            if (!$edu) {
+                $this->cancelEditEducation();
+                $this->failGracefully('msg_edu', 'Data pendidikan/sertifikasi tidak ditemukan.');
+                return;
             }
+            $this->editingEduId = $id;
+            $this->edu_type = $edu->type;
+            $this->edu_title = $edu->title;
+            $this->edu_subtitle = $edu->subtitle;
+            $this->edu_description = $edu->description ?? '';
+            $this->edu_certificate_link = $edu->certificate_link ?? '';
+            $this->edu_gpa = '';
+            $this->edu_eprt = '';
+            $this->edu_tak = '';
+            $this->edu_final_grade = '';
+            if ($edu->metrics) {
+                if (isset($edu->metrics['GPA'])) {
+                    $this->edu_level = 'university';
+                    $this->edu_gpa = $edu->metrics['GPA'] ?? '';
+                    $this->edu_eprt = $edu->metrics['EPRT'] ?? '';
+                    $this->edu_tak = $edu->metrics['TAK Score'] ?? '';
+                } else {
+                    $this->edu_level = 'school';
+                    $this->edu_final_grade = $edu->metrics['Final Grade'] ?? '';
+                }
+            }
+        } catch (\Throwable $e) {
+            report($e);
+            $this->cancelEditEducation();
+            $this->failGracefully('msg_edu', 'Gagal memuat data.');
         }
     }
 
@@ -400,24 +464,29 @@ new class extends Component
         $this->edu_final_grade = $this->blankToNull($this->edu_final_grade);
 
         $this->validate($this->educationRules(), $this->educationMessages());
-        $edu = Education::find($this->editingEduId);
-        if (!$edu) {
-            $this->cancelEditEducation();
-            session()->flash('msg_edu', 'Data sudah dihapus, edit dibatalkan.');
-            return;
+        try {
+            $edu = Education::find($this->editingEduId);
+            if (!$edu) {
+                $this->cancelEditEducation();
+                $this->failGracefully('msg_edu', 'Data sudah dihapus, edit dibatalkan.');
+                return;
+            }
+            $metrics = $this->_buildEduMetrics();
+            $certLink = $this->edu_type !== 'education' ? $this->edu_certificate_link : null;
+            $edu->update([
+                'type' => $this->edu_type,
+                'title' => $this->edu_title,
+                'subtitle' => $this->edu_subtitle,
+                'description' => $this->blankToNull($this->edu_description),
+                'metrics' => $metrics,
+                'certificate_link' => $certLink,
+            ]);
+            $this->_resetEduForm();
+            session()->flash('msg_edu', 'Data berhasil diperbarui!');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_edu', 'Gagal memperbarui data. Coba lagi.');
         }
-        $metrics = $this->_buildEduMetrics();
-        $certLink = $this->edu_type !== 'education' ? $this->edu_certificate_link : null;
-        $edu->update([
-            'type' => $this->edu_type,
-            'title' => $this->edu_title,
-            'subtitle' => $this->edu_subtitle,
-            'description' => $this->blankToNull($this->edu_description),
-            'metrics' => $metrics,
-            'certificate_link' => $certLink,
-        ]);
-        $this->_resetEduForm();
-        session()->flash('msg_edu', 'Data berhasil diperbarui!');
     }
 
     public function cancelEditEducation()
@@ -446,11 +515,16 @@ new class extends Component
 
     public function deleteEducation($id)
     {
-        if ((int) $this->editingEduId === (int) $id) {
-            $this->cancelEditEducation();
-            session()->flash('msg_edu', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+        try {
+            if ((int) $this->editingEduId === (int) $id) {
+                $this->cancelEditEducation();
+                session()->flash('msg_edu', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+            }
+            Education::find($id)?->delete();
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_edu', 'Gagal menghapus data. Coba lagi.');
         }
-        Education::find($id)?->delete();
     }
 
     private function projectRules(): array
@@ -484,63 +558,81 @@ new class extends Component
     {
         $this->proj_url = $this->blankToNull($this->proj_url);
         $this->validate($this->projectRules(), $this->projectMessages());
-        $imagePath = $this->proj_image ? $this->proj_image->store('projects', 'public') : null;
-        Project::create([
-            'title' => $this->proj_title,
-            'category' => $this->proj_category,
-            'description' => $this->proj_description,
-            'url' => $this->proj_url,
-            'tech_stack' => array_values($this->proj_selected_skills ?? []),
-            'image_path' => $imagePath,
-        ]);
-        $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image']);
-        $this->proj_category = 'Web Development';
-        session()->flash('msg_proj', 'Proyek berhasil ditambahkan!');
+        try {
+            $imagePath = $this->proj_image ? $this->proj_image->store('projects', 'public') : null;
+            Project::create([
+                'title' => $this->proj_title,
+                'category' => $this->proj_category,
+                'description' => $this->proj_description,
+                'url' => $this->proj_url,
+                'tech_stack' => array_values($this->proj_selected_skills ?? []),
+                'image_path' => $imagePath,
+            ]);
+            $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image']);
+            $this->proj_category = 'Web Development';
+            session()->flash('msg_proj', 'Proyek berhasil ditambahkan!');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->proj_image = null;
+            $this->failGracefully('msg_proj', 'Gagal menambah proyek. Coba lagi.');
+        }
     }
 
     public function editProject($id)
     {
-        $proj = Project::find($id);
-        if (!$proj) {
+        try {
+            $proj = Project::find($id);
+            if (!$proj) {
+                $this->cancelEditProject();
+                $this->failGracefully('msg_proj', 'Data proyek tidak ditemukan.');
+                return;
+            }
+            $this->editingProjId = $id;
+            $this->proj_title = $proj->title;
+            $this->proj_category = $proj->category;
+            $this->proj_description = $proj->description;
+            $this->proj_url = $proj->url ?? '';
+            $this->proj_selected_skills = $proj->tech_stack ?? [];
+        } catch (\Throwable $e) {
+            report($e);
             $this->cancelEditProject();
-            session()->flash('msg_proj', 'Data proyek tidak ditemukan.');
-            return;
+            $this->failGracefully('msg_proj', 'Gagal memuat data proyek.');
         }
-        $this->editingProjId = $id;
-        $this->proj_title = $proj->title;
-        $this->proj_category = $proj->category;
-        $this->proj_description = $proj->description;
-        $this->proj_url = $proj->url ?? '';
-        $this->proj_selected_skills = $proj->tech_stack ?? [];
     }
 
     public function updateProject()
     {
         $this->proj_url = $this->blankToNull($this->proj_url);
         $this->validate($this->projectRules(), $this->projectMessages());
-        $proj = Project::find($this->editingProjId);
-        if (!$proj) {
-            $this->cancelEditProject();
-            session()->flash('msg_proj', 'Data sudah dihapus, edit dibatalkan.');
-            return;
-        }
-        $data = [
-            'title' => $this->proj_title,
-            'category' => $this->proj_category,
-            'description' => $this->proj_description,
-            'url' => $this->proj_url,
-            'tech_stack' => array_values($this->proj_selected_skills ?? []),
-        ];
-        if ($this->proj_image) {
-            if ($proj->image_path) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($proj->image_path);
+        try {
+            $proj = Project::find($this->editingProjId);
+            if (!$proj) {
+                $this->cancelEditProject();
+                $this->failGracefully('msg_proj', 'Data sudah dihapus, edit dibatalkan.');
+                return;
             }
-            $data['image_path'] = $this->proj_image->store('projects', 'public');
+            $data = [
+                'title' => $this->proj_title,
+                'category' => $this->proj_category,
+                'description' => $this->proj_description,
+                'url' => $this->proj_url,
+                'tech_stack' => array_values($this->proj_selected_skills ?? []),
+            ];
+            if ($this->proj_image) {
+                if ($proj->image_path) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($proj->image_path);
+                }
+                $data['image_path'] = $this->proj_image->store('projects', 'public');
+            }
+            $proj->update($data);
+            $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image', 'editingProjId']);
+            $this->proj_category = 'Web Development';
+            session()->flash('msg_proj', 'Proyek berhasil diperbarui!');
+        } catch (\Throwable $e) {
+            report($e);
+            $this->proj_image = null;
+            $this->failGracefully('msg_proj', 'Gagal memperbarui proyek. Coba lagi.');
         }
-        $proj->update($data);
-        $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image', 'editingProjId']);
-        $this->proj_category = 'Web Development';
-        session()->flash('msg_proj', 'Proyek berhasil diperbarui!');
     }
 
     public function cancelEditProject()
@@ -551,11 +643,16 @@ new class extends Component
 
     public function deleteProject($id)
     {
-        if ((int) $this->editingProjId === (int) $id) {
-            $this->cancelEditProject();
-            session()->flash('msg_proj', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+        try {
+            if ((int) $this->editingProjId === (int) $id) {
+                $this->cancelEditProject();
+                session()->flash('msg_proj', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+            }
+            Project::find($id)?->delete();
+        } catch (\Throwable $e) {
+            report($e);
+            $this->failGracefully('msg_proj', 'Gagal menghapus proyek. Coba lagi.');
         }
-        Project::find($id)?->delete();
     }
     #[Computed]
     public function profile()
@@ -1311,15 +1408,15 @@ new class extends Component
                                     @foreach($this->skills as $skill)
                                         <button
                                             type="button"
-                                            @click="toggle('{{ $skill->name }}')"
-                                            :class="isSelected('{{ $skill->name }}')
+                                            @click="toggle(@js($skill->name))"
+                                            :class="isSelected(@js($skill->name))
                                                 ? 'bg-teal-500/20 border-teal-500/60 text-teal-300'
                                                 : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-teal-500/40 hover:text-slate-300'"
                                             class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all duration-100 text-xs font-semibold cursor-pointer select-none"
                                         >
                                             <i
                                                 class="{{ $skill->icon }} text-xs"
-                                                :class="isSelected('{{ $skill->name }}') ? 'text-teal-400' : ''"
+                                                :class="isSelected(@js($skill->name)) ? 'text-teal-400' : ''"
                                             ></i>
                                             {{ $skill->name }}
                                         </button>
