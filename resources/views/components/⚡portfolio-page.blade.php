@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -92,6 +92,7 @@ new class extends Component
     private function failGracefully(string $flashKey, string $message = 'Terjadi kesalahan. Silakan coba lagi.'): void
     {
         session()->flash($flashKey, $message);
+        $this->dispatch('toast', message: $message, type: 'error');
     }
 
     public function saveProfile()
@@ -155,6 +156,7 @@ new class extends Component
             $profile->update($data);
             $this->profile_avatar = null;
             session()->flash('msg_profile', 'Profil berhasil disimpan!');
+            $this->dispatch('toast', message: 'Profil berhasil disimpan!', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->profile_avatar = null;
@@ -188,6 +190,7 @@ new class extends Component
             Skill::create(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
             $this->reset(['skill_name', 'skill_icon']);
             session()->flash('msg_skill', 'Keahlian berhasil ditambahkan!');
+            $this->dispatch('toast', message: 'Keahlian berhasil ditambahkan!', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_skill', 'Gagal menambah keahlian. Coba lagi.');
@@ -227,6 +230,7 @@ new class extends Component
             $skill->update(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
             $this->reset(['skill_name', 'skill_icon', 'editingSkillId']);
             session()->flash('msg_skill', 'Keahlian berhasil diperbarui!');
+            $this->dispatch('toast', message: 'Keahlian berhasil diperbarui!', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_skill', 'Gagal memperbarui keahlian. Coba lagi.');
@@ -245,8 +249,10 @@ new class extends Component
             if ((int) $this->editingSkillId === (int) $id) {
                 $this->cancelEditSkill();
                 session()->flash('msg_skill', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+                $this->dispatch('toast', message: 'Item yang sedang diedit dihapus, edit dibatalkan.', type: 'warning');
             }
             Skill::find($id)?->delete();
+            $this->dispatch('toast', message: 'Keahlian berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_skill', 'Gagal menghapus keahlian. Coba lagi.');
@@ -284,6 +290,7 @@ new class extends Component
             ]);
             $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description']);
             session()->flash('msg_exp', 'Pengalaman berhasil ditambahkan!');
+            $this->dispatch('toast', message: 'Pengalaman berhasil ditambahkan!', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_exp', 'Gagal menambah pengalaman. Coba lagi.');
@@ -329,6 +336,7 @@ new class extends Component
             ]);
             $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description', 'editingExpId']);
             session()->flash('msg_exp', 'Pengalaman berhasil diperbarui!');
+            $this->dispatch('toast', message: 'Pengalaman berhasil diperbarui!', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_exp', 'Gagal memperbarui pengalaman. Coba lagi.');
@@ -346,8 +354,10 @@ new class extends Component
             if ((int) $this->editingExpId === (int) $id) {
                 $this->cancelEditExperience();
                 session()->flash('msg_exp', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+                $this->dispatch('toast', message: 'Item yang sedang diedit dihapus, edit dibatalkan.', type: 'warning');
             }
             Experience::find($id)?->delete();
+            $this->dispatch('toast', message: 'Pengalaman berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_exp', 'Gagal menghapus pengalaman. Coba lagi.');
@@ -412,6 +422,7 @@ new class extends Component
             ]);
             $this->_resetEduForm();
             session()->flash('msg_edu', 'Pendidikan/Sertifikasi berhasil ditambahkan!');
+            $this->dispatch('toast', message: 'Pendidikan/Sertifikasi berhasil ditambahkan!', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_edu', 'Gagal menambah data. Coba lagi.');
@@ -483,6 +494,7 @@ new class extends Component
             ]);
             $this->_resetEduForm();
             session()->flash('msg_edu', 'Data berhasil diperbarui!');
+            $this->dispatch('toast', message: 'Data berhasil diperbarui!', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_edu', 'Gagal memperbarui data. Coba lagi.');
@@ -519,8 +531,10 @@ new class extends Component
             if ((int) $this->editingEduId === (int) $id) {
                 $this->cancelEditEducation();
                 session()->flash('msg_edu', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+                $this->dispatch('toast', message: 'Item yang sedang diedit dihapus, edit dibatalkan.', type: 'warning');
             }
             Education::find($id)?->delete();
+            $this->dispatch('toast', message: 'Data berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_edu', 'Gagal menghapus data. Coba lagi.');
@@ -571,6 +585,7 @@ new class extends Component
             $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image']);
             $this->proj_category = 'Web Development';
             session()->flash('msg_proj', 'Proyek berhasil ditambahkan!');
+            $this->dispatch('toast', message: 'Proyek berhasil ditambahkan!', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->proj_image = null;
@@ -628,6 +643,7 @@ new class extends Component
             $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image', 'editingProjId']);
             $this->proj_category = 'Web Development';
             session()->flash('msg_proj', 'Proyek berhasil diperbarui!');
+            $this->dispatch('toast', message: 'Proyek berhasil diperbarui!', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->proj_image = null;
@@ -647,8 +663,10 @@ new class extends Component
             if ((int) $this->editingProjId === (int) $id) {
                 $this->cancelEditProject();
                 session()->flash('msg_proj', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+                $this->dispatch('toast', message: 'Item yang sedang diedit dihapus, edit dibatalkan.', type: 'warning');
             }
             Project::find($id)?->delete();
+            $this->dispatch('toast', message: 'Proyek berhasil dihapus.', type: 'success');
         } catch (\Throwable $e) {
             report($e);
             $this->failGracefully('msg_proj', 'Gagal menghapus proyek. Coba lagi.');
@@ -1638,4 +1656,65 @@ new class extends Component
     <button id="scrollToTop" class="no-print fixed bottom-6 right-6 z-40 w-11 h-11 rounded-xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-brand-500 hover:border-brand-500/30 active:scale-95 shadow-lg opacity-0 pointer-events-none translate-y-4 transition-all duration-300 flex items-center justify-center" aria-label="Scroll to Top">
         <i class="fa-solid fa-arrow-up text-base"></i>
     </button>
+
+    <!-- Toast Notification System -->
+    <div
+        x-data="{
+            toasts: [],
+            add(message, type = 'success') {
+                const id = Date.now();
+                this.toasts.push({ id, message, type });
+                setTimeout(() => this.remove(id), 4000);
+            },
+            remove(id) {
+                this.toasts = this.toasts.filter(t => t.id !== id);
+            }
+        }"
+        @toast.window="add($event.detail.message, $event.detail.type)"
+        x-init="
+            @if(session()->has('msg_profile')) $nextTick(() => add('{{ session('msg_profile') }}', '{{ str_contains(session('msg_profile'), 'Gagal') ? 'error' : 'success' }}')); @endif
+            @if(session()->has('msg_skill')) $nextTick(() => add('{{ session('msg_skill') }}', '{{ str_contains(session('msg_skill'), 'Gagal') ? 'error' : 'success' }}')); @endif
+            @if(session()->has('msg_exp')) $nextTick(() => add('{{ session('msg_exp') }}', '{{ str_contains(session('msg_exp'), 'Gagal') ? 'error' : 'success' }}')); @endif
+            @if(session()->has('msg_edu')) $nextTick(() => add('{{ session('msg_edu') }}', '{{ str_contains(session('msg_edu'), 'Gagal') ? 'error' : 'success' }}')); @endif
+            @if(session()->has('msg_proj')) $nextTick(() => add('{{ session('msg_proj') }}', '{{ str_contains(session('msg_proj'), 'Gagal') ? 'error' : 'success' }}')); @endif
+            @if($errors->any())
+                $nextTick(() => add('Input tidak valid. Silakan periksa kembali form.', 'error'));
+            @endif
+        "
+        class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none"
+    >
+        <template x-for="toast in toasts" :key="toast.id">
+            <div 
+                x-show="true"
+                x-transition:enter="transition ease-out duration-300 transform"
+                x-transition:enter-start="translate-y-2 opacity-0 scale-95"
+                x-transition:enter-end="translate-y-0 opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-200 transform"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                :class="{
+                    'bg-emerald-500/90 border-emerald-500 text-emerald-50 shadow-emerald-500/20': toast.type === 'success',
+                    'bg-red-500/90 border-red-500 text-red-50 shadow-red-500/20': toast.type === 'error',
+                    'bg-amber-500/90 border-amber-500 text-amber-950 shadow-amber-500/20': toast.type === 'warning'
+                }"
+                class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl border backdrop-blur-md shadow-lg font-sans font-semibold text-xs transition-all duration-300"
+            >
+                <div class="flex items-center gap-2">
+                    <template x-if="toast.type === 'success'">
+                        <i class="fa-solid fa-circle-check text-base text-emerald-100"></i>
+                    </template>
+                    <template x-if="toast.type === 'error'">
+                        <i class="fa-solid fa-circle-xmark text-base text-red-100"></i>
+                    </template>
+                    <template x-if="toast.type === 'warning'">
+                        <i class="fa-solid fa-circle-exclamation text-base text-amber-100"></i>
+                    </template>
+                    <span x-text="toast.message"></span>
+                </div>
+                <button @click="remove(toast.id)" class="text-white/70 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </template>
+    </div>
 </div>
