@@ -878,12 +878,31 @@ new class extends Component
                                 <input type="text" wire:model="profile_address" placeholder="contoh: Bandung, Indonesia" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
                             </div>
                             <div>
-                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Foto Profil (Avatar)</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="file" wire:model="profile_avatar" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-white hover:file:bg-slate-700 transition-all">
-                                    <div wire:loading wire:target="profile_avatar" class="text-xs text-amber-500 flex-shrink-0">Sedang mengupload...</div>
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Foto Profil (Avatar) <span class="text-xs text-slate-500">(Maks. 2MB)</span></label>
+                                <div class="space-y-1" x-data="{ clientError: '' }">
+                                    <div class="flex items-center gap-2">
+                                        <input type="file" 
+                                            wire:model="profile_avatar" 
+                                            wire:key="profile-avatar-input"
+                                            accept="image/*"
+                                            @change="
+                                                const file = $event.target.files[0];
+                                                if (file && file.size > 2 * 1024 * 1024) {
+                                                    clientError = 'Ukuran foto maksimal 2MB. Silakan kecilkan resolusi atau gunakan foto lain.';
+                                                    $event.target.value = '';
+                                                    $wire.set('profile_avatar', null);
+                                                } else {
+                                                    clientError = '';
+                                                }
+                                            "
+                                            class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-white hover:file:bg-slate-700 transition-all">
+                                        <div wire:loading wire:target="profile_avatar" class="text-xs text-amber-500 flex-shrink-0"><i class="fa-solid fa-spinner fa-spin"></i> Sedang mengupload...</div>
+                                    </div>
+                                    <template x-if="clientError">
+                                        <span class="text-red-400 text-xs mt-1 block" x-text="clientError"></span>
+                                    </template>
+                                    @error('profile_avatar') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                                 </div>
-                                @error('profile_avatar') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
