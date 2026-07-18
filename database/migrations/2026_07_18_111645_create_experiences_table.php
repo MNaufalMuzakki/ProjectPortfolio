@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('experiences', function (Blueprint $table) {
             $table->id();
-            $table->string('role'); // Contoh: "Ketua Panitia"
-            $table->string('company'); // Contoh: "BEM KEMA"
-            $table->string('period'); // Contoh: "Agustus 2024 - Sekarang"
+            $table->string('role');
+            $table->string('company');
+            $table->string('period');
             $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();

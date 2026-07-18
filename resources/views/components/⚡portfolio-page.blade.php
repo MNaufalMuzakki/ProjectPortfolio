@@ -21,6 +21,11 @@ new class extends Component
     public $profile_bio;
     public $profile_github;
     public $profile_linkedin;
+    public $profile_email;
+    public $profile_whatsapp;
+    public $profile_instagram;
+    public $profile_address;
+    public $profile_avatar;
 
     // Skill Form
     public $skill_name = '';
@@ -56,6 +61,10 @@ new class extends Component
             $this->profile_bio = $profile->bio;
             $this->profile_github = $profile->github;
             $this->profile_linkedin = $profile->linkedin;
+            $this->profile_email = $profile->email;
+            $this->profile_whatsapp = $profile->whatsapp;
+            $this->profile_instagram = $profile->instagram;
+            $this->profile_address = $profile->address;
         }
     }
 
@@ -69,13 +78,29 @@ new class extends Component
     {
         $profile = Profile::first();
         if ($profile) {
-            $profile->update([
+            $data = [
                 'name' => $this->profile_name,
                 'role' => $this->profile_role,
                 'bio' => $this->profile_bio,
                 'github' => $this->profile_github,
                 'linkedin' => $this->profile_linkedin,
-            ]);
+                'email' => $this->profile_email,
+                'whatsapp' => $this->profile_whatsapp,
+                'instagram' => $this->profile_instagram,
+                'address' => $this->profile_address,
+            ];
+
+            if ($this->profile_avatar) {
+                if ($profile->avatar_path) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($profile->avatar_path);
+                }
+                $path = $this->profile_avatar->store('avatars', 'public');
+                $data['avatar_path'] = $path;
+            }
+
+            $profile->update($data);
+            $this->profile_avatar = null;
+
             session()->flash('msg_profile', 'Profil berhasil disimpan!');
         }
     }
@@ -328,7 +353,7 @@ new class extends Component
                                 <textarea wire:model="profile_bio" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white h-[116px] focus:border-amber-500 outline-none transition-all resize-none"></textarea>
                             </div>
                         </div>
-                        <div class="md:col-span-2 grid grid-cols-2 gap-4">
+                        <div class="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
                                 <label class="text-sm font-semibold text-slate-400 mb-1 block">GitHub URL</label>
                                 <input type="text" wire:model="profile_github" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
@@ -336,6 +361,31 @@ new class extends Component
                             <div>
                                 <label class="text-sm font-semibold text-slate-400 mb-1 block">LinkedIn URL</label>
                                 <input type="text" wire:model="profile_linkedin" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Email</label>
+                                <input type="email" wire:model="profile_email" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">WhatsApp</label>
+                                <input type="text" wire:model="profile_whatsapp" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                            </div>
+                        </div>
+                        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Instagram</label>
+                                <input type="text" wire:model="profile_instagram" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Lokasi / Domisili</label>
+                                <input type="text" wire:model="profile_address" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-slate-400 mb-1 block">Foto Profil (Avatar)</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="file" wire:model="profile_avatar" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-white hover:file:bg-slate-700 transition-all">
+                                    <div wire:loading wire:target="profile_avatar" class="text-xs text-amber-500 flex-shrink-0">Uploading...</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -396,8 +446,12 @@ new class extends Component
                         <!-- Avatar Image Frame -->
                         <div class="relative w-full h-full rounded-full bg-slate-950 overflow-hidden border-4 border-slate-900 z-10 flex items-center justify-center">
                             
-                            <!-- Profile Pic Fallback to abstract design if error -->
-                            <img src="profile.jpg" alt="Muhammad Naufal Muzakki" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                            <!-- Profile Pic -->
+                            @if($this->profile?->avatar_path)
+                                <img src="{{ Storage::url($this->profile->avatar_path) }}" alt="{{ $this->profile?->name ?? 'Muhammad Naufal Muzakki' }}" class="w-full h-full object-cover">
+                            @else
+                                <img src="profile.jpg" alt="Muhammad Naufal Muzakki" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                            @endif
                             
                             <!-- Fallback design -->
                             <div class="hidden w-full h-full bg-gradient-to-br from-slate-900 to-slate-950 flex flex-col items-center justify-center p-6 text-center select-none">
@@ -534,11 +588,11 @@ new class extends Component
         </section>
 
         <!-- ==========================================
-          C. WORK EXPERIENCE
+          C. EXPERIENCE
         ========================================== -->
         <section id="experience" class="py-10 md:py-12 border-t border-slate-200 dark:border-slate-900">
             <div class="flex flex-col items-start mb-8">
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-2">Work Experience</h2>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight mt-2">Experience</h2>
                 <div class="w-16 h-1 bg-gradient-to-r from-brand-500 to-electric-500 rounded-full mt-3"></div>
             </div>
 
@@ -551,12 +605,12 @@ new class extends Component
                         @endif
                     </div>
                     <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-4 space-y-3">
-                        <input type="text" wire:model="exp_role" placeholder="Role / Jabatan *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                        <input type="text" wire:model="exp_role" placeholder="Peran / Jabatan *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
                         <div class="grid grid-cols-2 gap-3">
-                            <input type="text" wire:model="exp_company" placeholder="Perusahaan / Organisasi *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                            <input type="text" wire:model="exp_period" placeholder="Periode (Jan 2024 - Skrg) *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                            <input type="text" wire:model="exp_company" placeholder="Penyelenggara / Organisasi / UKM *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                            <input type="text" wire:model="exp_period" placeholder="Periode (contoh: Agustus 2023 - Sekarang) *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
                         </div>
-                        <textarea wire:model="exp_description" placeholder="Deskripsi singkat..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none h-20"></textarea>
+                        <textarea wire:model="exp_description" placeholder="Deskripsi peran dan tanggung jawab..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none h-20"></textarea>
                         <button wire:click="addExperience" class="w-full bg-teal-500 text-slate-900 py-2 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah</button>
                     </div>
                     <div class="space-y-3">
@@ -592,7 +646,7 @@ new class extends Component
                             </div>
                         </div>
                     @empty
-                        <div class="text-center text-slate-500 italic py-4">No work experiences listed yet</div>
+                        <div class="text-center text-slate-500 italic py-4">No experience entries found</div>
                     @endforelse
                 </div>
             @endif
@@ -904,17 +958,17 @@ new class extends Component
                                 </div>
                                 <div class="min-w-0 flex-grow">
                                     <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</span>
-                                    <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate" title="mnaufalmuza@student.telkomuniversity.ac.id">mnaufalmuza@student.telkomuniversity.ac.id</span>
+                                    <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate" title="{{ $this->profile?->email ?? 'mnaufalmuza@student.telkomuniversity.ac.id' }}">{{ $this->profile?->email ?? 'mnaufalmuza@student.telkomuniversity.ac.id' }}</span>
                                 </div>
                             </div>
                             <!-- Copy Email Action -->
-                            <button id="copyEmailBtn" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 flex items-center justify-center text-slate-400 hover:text-brand-500 hover:border-brand-500/30 active:scale-90 transition-all duration-200 flex-shrink-0 z-10 no-print" title="Copy Email">
+                            <button id="copyEmailBtn" data-email="{{ $this->profile?->email ?? 'mnaufalmuza@student.telkomuniversity.ac.id' }}" class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 flex items-center justify-center text-slate-400 hover:text-brand-500 hover:border-brand-500/30 active:scale-90 transition-all duration-200 flex-shrink-0 z-10 no-print" title="Copy Email">
                                 <i class="fa-regular fa-copy text-xs" id="copyEmailIcon"></i>
                             </button>
                         </div>
 
                         <!-- WhatsApp Card -->
-                        <a href="https://wa.me/628112120582" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
+                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $this->profile?->whatsapp ?? '628112120582') }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
                             <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-solid fa-phone text-base"></i>
                             </div>
@@ -925,35 +979,35 @@ new class extends Component
                         </a>
 
                         <!-- Instagram Card -->
-                        <a href="https://www.instagram.com/naufal_mauzakki" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-pink-500/40 hover:shadow-md hover:shadow-pink-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
+                        <a href="https://www.instagram.com/{{ ltrim($this->profile?->instagram ?? 'naufal_mauzakki', '@') }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-pink-500/40 hover:shadow-md hover:shadow-pink-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
                             <div class="w-11 h-11 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-500 dark:text-pink-400 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-brands fa-instagram text-base"></i>
                             </div>
                             <div class="min-w-0 flex-grow">
                                 <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Instagram</span>
-                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">@naufal_mauzakki</span>
+                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ $this->profile?->instagram ?? '@naufal_mauzakki' }}</span>
                             </div>
                         </a>
 
                         <!-- LinkedIn Card -->
-                        <a href="https://www.linkedin.com/in/muhammad-naufal-muzakki-962674292/" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-electric-500/40 hover:shadow-md hover:shadow-electric-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
-                            <div class="w-11 h-11 rounded-xl bg-electric-500/10 border border-electric-500/20 text-electric-600 dark:text-electric-400 flex items-center justify-center flex-shrink-0">
+                        <a href="{{ $this->profile?->linkedin ?? 'https://www.linkedin.com/in/muhammad-naufal-muzakki-962674292/' }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-electric-500/40 hover:shadow-md hover:shadow-electric-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
+                            <div class="w-11 h-11 rounded-xl bg-electric-500/10 border border-electric-500/20 text-electric-650 dark:text-electric-400 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-brands fa-linkedin-in text-base"></i>
                             </div>
                             <div class="min-w-0 flex-grow">
                                 <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">LinkedIn</span>
-                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">Muhammad Naufal Muzakki</span>
+                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ $this->profile?->name ?? 'Muhammad Naufal Muzakki' }}</span>
                             </div>
                         </a>
 
                         <!-- GitHub Card -->
-                        <a href="https://github.com/MNaufalMuzakki" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-slate-500/40 hover:shadow-md hover:shadow-slate-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
+                        <a href="{{ $this->profile?->github ?? 'https://github.com/MNaufalMuzakki' }}" target="_blank" class="card-style bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 hover:border-slate-500/40 hover:shadow-md hover:shadow-slate-500/5 active:scale-[0.98] transition-all duration-300 flex items-center gap-4">
                             <div class="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center flex-shrink-0">
                                 <i class="fa-brands fa-github text-base"></i>
                             </div>
                             <div class="min-w-0 flex-grow">
                                 <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">GitHub</span>
-                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">MNaufalMuzakki</span>
+                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{{ basename($this->profile?->github ?? 'MNaufalMuzakki') }}</span>
                             </div>
                         </a>
 
@@ -964,7 +1018,7 @@ new class extends Component
                             </div>
                             <div class="min-w-0 flex-grow">
                                 <span class="block text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Location</span>
-                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-snug">Derwati, Rancasari, Bandung</span>
+                                <span class="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-snug">{{ $this->profile?->address ?? 'Derwati, Rancasari, Bandung' }}</span>
                             </div>
                         </div>
 

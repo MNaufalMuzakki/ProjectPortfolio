@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
-            $table->string('title'); // Contoh: "Sistem Informasi Penjualan"
-            $table->string('category'); // Contoh: "Web Development" atau "Game Development"
+            $table->string('title');
+            $table->string('category');
             $table->text('description');
             
-            $table->string('image_path')->nullable(); // Path foto yang di-upload ke Storage
-            $table->string('url')->nullable(); // Link ke Google Drive portfolio
+            $table->string('image_path')->nullable();
+            $table->string('url')->nullable();
             
-            $table->json('tech_stack')->nullable(); // JSON Array ["Laravel", "PHP", "Tailwind"]
+            $table->json('tech_stack')->nullable();
             
             $table->timestamps();
             $table->softDeletes();

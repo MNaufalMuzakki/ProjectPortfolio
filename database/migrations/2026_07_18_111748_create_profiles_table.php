@@ -17,16 +17,16 @@ return new class extends Migration
             $table->string('role');
             $table->text('bio');
             
-            // Sosial Media & Kontak
             $table->string('email')->nullable();
             $table->string('whatsapp')->nullable();
             $table->string('instagram')->nullable();
             $table->string('linkedin')->nullable();
             $table->string('github')->nullable();
             $table->string('address')->nullable();
+            $table->string('avatar_path')->nullable();
             
             $table->timestamps();
-            $table->softDeletes(); // Sesuai syarat "Nilai Tambah"
+            $table->softDeletes();
         });
     }
 

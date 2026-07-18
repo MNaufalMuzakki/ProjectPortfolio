@@ -97,4 +97,23 @@ class PortfolioCRUDTest extends TestCase
             'category' => 'Web Development',
         ]);
     }
+
+    public function test_can_save_profile_with_avatar(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $file = \Illuminate\Http\UploadedFile::fake()->image('avatar.jpg');
+
+        Livewire::test('portfolio-page')
+            ->set('profile_name', 'Naufal Baru')
+            ->set('profile_role', 'Fullstack Developer')
+            ->set('profile_bio', 'Bio baru yang keren.')
+            ->set('profile_avatar', $file)
+            ->call('saveProfile')
+            ->assertHasNoErrors();
+
+        $profile = Profile::first();
+        $this->assertNotNull($profile->avatar_path);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($profile->avatar_path);
+    }
 }

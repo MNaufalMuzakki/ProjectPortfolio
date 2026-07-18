@@ -11,6 +11,6 @@ class Profile extends Model
 
     protected $fillable = [
         'name', 'role', 'bio', 'email', 'whatsapp', 
-        'instagram', 'linkedin', 'github', 'address'
+        'instagram', 'linkedin', 'github', 'address', 'avatar_path'
     ];
 }

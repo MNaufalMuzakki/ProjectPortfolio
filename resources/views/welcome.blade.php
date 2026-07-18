@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="id" class="scroll-smooth dark">
+<html lang="en" class="scroll-smooth dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio - Naufal Muzakki</title>
+    <title>Muhammad Naufal Muzakki - Personal Portfolio</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2314b8a6'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>">
+    <meta name="description" content="Portfolio and CV website of Muhammad Naufal Muzakki, Multimedia Engineering student at Telkom University. Specialized in Web Development, Game Development, and Videography.">
+    
+    <!-- Open Graph / Facebook Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mnaufalmuzakki.github.io/portfolio/">
+    <meta property="og:title" content="Muhammad Naufal Muzakki - Personal Portfolio">
+    <meta property="og:description" content="Portfolio and CV website of Muhammad Naufal Muzakki, Multimedia Engineering student at Telkom University. Specialized in Web Development, Game Development, and Videography.">
     
     <!-- Google Fonts & FontAwesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +19,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <script>
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     
@@ -41,7 +57,13 @@
         const themeToggle = document.getElementById('themeToggle');
         if (themeToggle) {
             themeToggle.addEventListener('click', () => {
-                document.documentElement.classList.toggle('dark');
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
             });
         }
 
@@ -60,7 +82,8 @@
         if (copyEmailBtn && copyEmailIcon) {
             copyEmailBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                navigator.clipboard.writeText('mnaufalmuza@student.telkomuniversity.ac.id');
+                const emailToCopy = copyEmailBtn.getAttribute('data-email') || 'mnaufalmuza@student.telkomuniversity.ac.id';
+                navigator.clipboard.writeText(emailToCopy);
                 copyEmailIcon.className = 'fa-solid fa-check text-emerald-500';
                 setTimeout(() => {
                     copyEmailIcon.className = 'fa-regular fa-copy text-xs';

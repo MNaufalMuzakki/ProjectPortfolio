@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('skills', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Contoh: "Laravel", "Unity"
-            $table->string('icon'); // Contoh: "fa-brands fa-laravel"
-            $table->string('category'); // Contoh: "Web Development", "Game Development"
+            $table->string('name');
+            $table->string('icon');
+            $table->string('category');
             $table->timestamps();
             $table->softDeletes();
         });
