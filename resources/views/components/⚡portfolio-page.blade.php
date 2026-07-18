@@ -620,6 +620,16 @@ new class extends Component
                                             <i class="fa-solid fa-users text-sm"></i>
                                             <span class="text-[8px] truncate max-w-full">Team</span>
                                         </button>
+                                        
+                                        <!-- IDE / Tools -->
+                                        <button type="button" wire:click="$set('skill_icon', 'devicon-visualstudio-plain colored')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Visual Studio">
+                                            <i class="devicon-visualstudio-plain colored text-sm"></i>
+                                            <span class="text-[8px] truncate max-w-full">VS Studio</span>
+                                        </button>
+                                        <button type="button" wire:click="$set('skill_icon', 'devicon-vscode-plain colored')" class="p-1.5 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="VS Code">
+                                            <i class="devicon-vscode-plain colored text-sm"></i>
+                                            <span class="text-[8px] truncate max-w-full">VS Code</span>
+                                        </button>
                                     </div>
                                 </div>
 
