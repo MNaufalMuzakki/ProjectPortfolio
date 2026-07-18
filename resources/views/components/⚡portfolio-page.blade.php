@@ -43,6 +43,12 @@ new class extends Component
     public $edu_title = '';
     public $edu_subtitle = '';
     public $edu_description = '';
+    public $edu_level = 'university';
+    public $edu_gpa = '';
+    public $edu_eprt = '';
+    public $edu_tak = '';
+    public $edu_final_grade = '';
+    public $edu_certificate_link = '';
 
     // Project Form
     public $proj_title = '';
@@ -162,15 +168,43 @@ new class extends Component
             'edu_subtitle' => 'required',
         ]);
 
+        $metrics = null;
+        $certLink = null;
+
+        if ($this->edu_type === 'education') {
+            if ($this->edu_level === 'university') {
+                $metrics = array_filter([
+                    'GPA' => $this->edu_gpa,
+                    'EPRT' => $this->edu_eprt,
+                    'TAK Score' => $this->edu_tak,
+                ]);
+            } else {
+                $metrics = array_filter([
+                    'Final Grade' => $this->edu_final_grade,
+                ]);
+            }
+            if (empty($metrics)) {
+                $metrics = null;
+            }
+        } else {
+            $certLink = $this->edu_certificate_link ?: null;
+        }
+
         Education::create([
             'type' => $this->edu_type,
             'title' => $this->edu_title,
             'subtitle' => $this->edu_subtitle,
-            'description' => $this->edu_description,
+            'description' => $this->edu_description ?: null,
+            'metrics' => $metrics,
+            'certificate_link' => $certLink,
         ]);
 
-        $this->reset(['edu_title', 'edu_subtitle', 'edu_description']);
-        session()->flash('msg_edu', 'Pendidikan berhasil ditambahkan!');
+        $this->reset([
+            'edu_title', 'edu_subtitle', 'edu_description',
+            'edu_gpa', 'edu_eprt', 'edu_tak', 'edu_final_grade',
+            'edu_certificate_link'
+        ]);
+        session()->flash('msg_edu', 'Pendidikan/Sertifikasi berhasil ditambahkan!');
     }
 
     public function deleteEducation($id)
@@ -703,15 +737,89 @@ new class extends Component
                             <span class="text-green-400 text-sm font-bold">{{ session('msg_edu') }}</span>
                         @endif
                     </div>
-                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-4 space-y-3">
-                        <select wire:model="edu_type" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                            <option value="education">Education</option>
-                            <option value="certification">Certification</option>
-                        </select>
-                        <input type="text" wire:model="edu_title" placeholder="Nama Institusi / Sertifikasi *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                        <input type="text" wire:model="edu_subtitle" placeholder="Periode / Jurusan / Penerbit *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                        <textarea wire:model="edu_description" placeholder="Deskripsi lengkap..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none h-20"></textarea>
-                        <button wire:click="addEducation" class="w-full bg-teal-500 text-slate-900 py-2 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah</button>
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-4 space-y-4">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Tipe Entri</label>
+                            <select wire:model.live="edu_type" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                <option value="education">Pendidikan (Education)</option>
+                                <option value="certification">Sertifikasi (Certification)</option>
+                            </select>
+                        </div>
+
+                        @if($edu_type === 'education')
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-slate-400 block mb-1">Nama Kampus / Sekolah *</label>
+                                    <input type="text" wire:model="edu_title" placeholder="contoh: Telkom University atau SMAN 12 Bandung" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-400 block mb-1">Periode Pendidikan *</label>
+                                    <input type="text" wire:model="edu_subtitle" placeholder="contoh: July 2023 - Present atau 2020 - 2023" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-slate-400 block mb-1">Jurusan / Prodi (Opsional)</label>
+                                    <input type="text" wire:model="edu_description" placeholder="contoh: Teknologi Rekayasa Multimedia (kosongkan jika tidak ada)" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-400 block mb-1">Tingkat Pendidikan</label>
+                                    <select wire:model.live="edu_level" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                        <option value="university">Kuliah (Universitas / Institut / D3 / D4 / S1)</option>
+                                        <option value="school">Sekolah (SD / SMP / SMA / SMK)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            @if($edu_level === 'university')
+                                <div class="p-3 bg-slate-950/50 rounded-lg border border-slate-800/80 space-y-2">
+                                    <span class="text-[10px] text-amber-500 font-bold uppercase tracking-wider block">Nilai Kuliah (Kosongkan jika belum ada/ingin disembunyikan):</span>
+                                    <div class="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="text-[10px] text-slate-400 block mb-1">IPK (GPA)</label>
+                                            <input type="text" wire:model="edu_gpa" placeholder="contoh: 3.95" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs focus:border-amber-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] text-slate-400 block mb-1">Nilai EPRT</label>
+                                            <input type="text" wire:model="edu_eprt" placeholder="contoh: 537" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs focus:border-amber-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] text-slate-400 block mb-1">Skor TAK</label>
+                                            <input type="text" wire:model="edu_tak" placeholder="contoh: 160" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs focus:border-amber-500 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="p-3 bg-slate-950/50 rounded-lg border border-slate-800/80 space-y-2">
+                                    <span class="text-[10px] text-amber-500 font-bold uppercase tracking-wider block">Nilai Sekolah (Kosongkan jika belum ada/ingin disembunyikan):</span>
+                                    <div class="max-w-xs">
+                                        <label class="text-[10px] text-slate-400 block mb-1">Nilai Akhir / Rata-Rata UN / Rapor</label>
+                                        <input type="text" wire:model="edu_final_grade" placeholder="contoh: 89.81" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs focus:border-amber-500 outline-none">
+                                    </div>
+                                </div>
+                            @endif
+                        @else
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-slate-400 block mb-1">Nama Sertifikasi *</label>
+                                    <input type="text" wire:model="edu_title" placeholder="contoh: BNSP Competency Certificate" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-400 block mb-1">Bagian / Bidang yang Disertifikasi *</label>
+                                    <input type="text" wire:model="edu_subtitle" placeholder="contoh: Desainer Multimedia Madya" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Link Sertifikat (URL Google Drive / Credly dll - Opsional)</label>
+                                <input type="text" wire:model="edu_certificate_link" placeholder="contoh: https://drive.google.com/file/d/..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Deskripsi / Detail Sertifikasi (Opsional)</label>
+                                <textarea wire:model="edu_description" placeholder="contoh: Diterbitkan oleh BNSP melalui LSP Teknologi Digital. Berlaku 3 tahun..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none h-20"></textarea>
+                            </div>
+                        @endif
+
+                        <button wire:click="addEducation" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Entri</button>
                     </div>
                     <div class="space-y-3">
                         @foreach($this->educations as $edu)
@@ -751,7 +859,10 @@ new class extends Component
                                     </div>
                                     
                                     @if($edu->metrics)
-                                        <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-850 text-center">
+                                        @php
+                                            $metricCount = count($edu->metrics);
+                                        @endphp
+                                        <div class="grid {{ $metricCount === 1 ? 'grid-cols-1 max-w-[150px] mx-auto' : 'grid-cols-3' }} gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-850 text-center">
                                             @foreach($edu->metrics as $key => $value)
                                                 @php
                                                     $metricUrls = [
@@ -759,12 +870,19 @@ new class extends Component
                                                         'EPRT' => 'https://drive.google.com/file/d/1elpXLMgUG90eMd9A5nBRZ_5Tby4pN1NQ/view?usp=drive_link',
                                                         'TAK Score' => 'https://drive.google.com/file/d/152FsaXSpO6aZ-yax1m6-eiDCMFAdLd6o/view?usp=drive_link'
                                                     ];
-                                                    $url = $metricUrls[$key] ?? '#';
+                                                    $url = $metricUrls[$key] ?? null;
                                                 @endphp
-                                                <a href="{{ $url }}" target="_blank" class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850 hover:border-brand-500/40 hover:shadow-md hover:shadow-brand-500/5 active:scale-95 transition-all duration-300 group outline-none flex flex-col items-center justify-center">
-                                                    <span class="block text-sm sm:text-base font-black text-brand-600 dark:text-brand-400 group-hover:text-brand-500 transition-colors">{{ $value }}</span>
-                                                    <span class="text-[10px] font-mono text-slate-500 dark:text-slate-500 uppercase tracking-wider block mt-0.5">{{ $key }}</span>
-                                                </a>
+                                                @if($url)
+                                                    <a href="{{ $url }}" target="_blank" class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850 hover:border-brand-500/40 hover:shadow-md hover:shadow-brand-500/5 active:scale-95 transition-all duration-300 group outline-none flex flex-col items-center justify-center">
+                                                        <span class="block text-sm sm:text-base font-black text-brand-600 dark:text-brand-400 group-hover:text-brand-500 transition-colors">{{ $value }}</span>
+                                                        <span class="text-[10px] font-mono text-slate-550 dark:text-slate-550 uppercase tracking-wider block mt-0.5">{{ $key }}</span>
+                                                    </a>
+                                                @else
+                                                    <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850 flex flex-col items-center justify-center">
+                                                        <span class="block text-sm sm:text-base font-black text-brand-600 dark:text-brand-400">{{ $value }}</span>
+                                                        <span class="text-[10px] font-mono text-slate-550 dark:text-slate-550 uppercase tracking-wider block mt-0.5">{{ $key }}</span>
+                                                    </div>
+                                                @endif
                                             @endforeach
                                         </div>
                                     @endif
@@ -795,11 +913,13 @@ new class extends Component
                                                     <h3 class="text-base sm:text-lg font-extrabold text-slate-900 dark:text-slate-100 mt-0.5">{{ $cert->title }}</h3>
                                                 </div>
                                             </div>
-                                            <div class="no-print font-sans">
-                                                <a href="https://drive.google.com/file/d/1wSKmVVNs0y6e0vapsYyttoCClpVxN-01/view?usp=drive_link" target="_blank" class="px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 hover:border-brand-500/30 hover:text-brand-500 transition-all duration-300 active:scale-95 flex items-center gap-1.5">
-                                                    <i class="fa-regular fa-image text-brand-500"></i> View Certificate
-                                                </a>
-                                            </div>
+                                            @if($cert->certificate_link)
+                                                <div class="no-print font-sans">
+                                                    <a href="{{ $cert->certificate_link }}" target="_blank" class="px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 hover:border-brand-500/30 hover:text-brand-500 transition-all duration-300 active:scale-95 flex items-center gap-1.5">
+                                                        <i class="fa-regular fa-image text-brand-500"></i> View Certificate
+                                                    </a>
+                                                </div>
+                                            @endif
                                         </div>
 
                                         <h4 class="text-lg font-black text-slate-900 dark:text-slate-100 leading-snug">
