@@ -31,12 +31,14 @@ new class extends Component
     public $skill_name = '';
     public $skill_category = 'Web Development';
     public $skill_icon = '';
+    public $editingSkillId = null;
 
     // Experience Form
     public $exp_role = '';
     public $exp_company = '';
     public $exp_period = '';
     public $exp_description = '';
+    public $editingExpId = null;
 
     // Education Form
     public $edu_type = 'education';
@@ -49,6 +51,7 @@ new class extends Component
     public $edu_tak = '';
     public $edu_final_grade = '';
     public $edu_certificate_link = '';
+    public $editingEduId = null;
 
     // Project Form
     public $proj_title = '';
@@ -57,6 +60,7 @@ new class extends Component
     public $proj_url = '';
     public $proj_selected_skills = [];
     public $proj_image;
+    public $editingProjId = null;
 
     public function mount()
     {
@@ -114,20 +118,32 @@ new class extends Component
     // --- SKILLS CRUD ---
     public function addSkill()
     {
-        $this->validate([
-            'skill_name' => 'required',
-            'skill_icon' => 'required',
-            'skill_category' => 'required',
-        ]);
-
-        Skill::create([
-            'name' => $this->skill_name,
-            'category' => $this->skill_category,
-            'icon' => $this->skill_icon,
-        ]);
-
+        $this->validate(['skill_name' => 'required', 'skill_icon' => 'required', 'skill_category' => 'required']);
+        Skill::create(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
         $this->reset(['skill_name', 'skill_icon']);
         session()->flash('msg_skill', 'Skill berhasil ditambahkan!');
+    }
+
+    public function editSkill($id)
+    {
+        $skill = Skill::find($id);
+        $this->editingSkillId = $id;
+        $this->skill_name = $skill->name;
+        $this->skill_category = $skill->category;
+        $this->skill_icon = $skill->icon;
+    }
+
+    public function updateSkill()
+    {
+        $this->validate(['skill_name' => 'required', 'skill_icon' => 'required']);
+        Skill::find($this->editingSkillId)?->update(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
+        $this->reset(['skill_name', 'skill_icon', 'editingSkillId']);
+        session()->flash('msg_skill', 'Skill berhasil diperbarui!');
+    }
+
+    public function cancelEditSkill()
+    {
+        $this->reset(['skill_name', 'skill_icon', 'editingSkillId']);
     }
 
     public function deleteSkill($id)
@@ -138,21 +154,33 @@ new class extends Component
     // --- EXPERIENCE CRUD ---
     public function addExperience()
     {
-        $this->validate([
-            'exp_role' => 'required',
-            'exp_company' => 'required',
-            'exp_period' => 'required',
-        ]);
-
-        Experience::create([
-            'role' => $this->exp_role,
-            'company' => $this->exp_company,
-            'period' => $this->exp_period,
-            'description' => $this->exp_description,
-        ]);
-
+        $this->validate(['exp_role' => 'required', 'exp_company' => 'required', 'exp_period' => 'required']);
+        Experience::create(['role' => $this->exp_role, 'company' => $this->exp_company, 'period' => $this->exp_period, 'description' => $this->exp_description]);
         $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description']);
         session()->flash('msg_exp', 'Pengalaman berhasil ditambahkan!');
+    }
+
+    public function editExperience($id)
+    {
+        $exp = Experience::find($id);
+        $this->editingExpId = $id;
+        $this->exp_role = $exp->role;
+        $this->exp_company = $exp->company;
+        $this->exp_period = $exp->period;
+        $this->exp_description = $exp->description ?? '';
+    }
+
+    public function updateExperience()
+    {
+        $this->validate(['exp_role' => 'required', 'exp_company' => 'required', 'exp_period' => 'required']);
+        Experience::find($this->editingExpId)?->update(['role' => $this->exp_role, 'company' => $this->exp_company, 'period' => $this->exp_period, 'description' => $this->exp_description]);
+        $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description', 'editingExpId']);
+        session()->flash('msg_exp', 'Pengalaman berhasil diperbarui!');
+    }
+
+    public function cancelEditExperience()
+    {
+        $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description', 'editingExpId']);
     }
 
     public function deleteExperience($id)
@@ -163,48 +191,65 @@ new class extends Component
     // --- EDUCATION CRUD ---
     public function addEducation()
     {
-        $this->validate([
-            'edu_title' => 'required',
-            'edu_subtitle' => 'required',
-        ]);
-
-        $metrics = null;
-        $certLink = null;
-
-        if ($this->edu_type === 'education') {
-            if ($this->edu_level === 'university') {
-                $metrics = array_filter([
-                    'GPA' => $this->edu_gpa,
-                    'EPRT' => $this->edu_eprt,
-                    'TAK Score' => $this->edu_tak,
-                ]);
-            } else {
-                $metrics = array_filter([
-                    'Final Grade' => $this->edu_final_grade,
-                ]);
-            }
-            if (empty($metrics)) {
-                $metrics = null;
-            }
-        } else {
-            $certLink = $this->edu_certificate_link ?: null;
-        }
-
-        Education::create([
-            'type' => $this->edu_type,
-            'title' => $this->edu_title,
-            'subtitle' => $this->edu_subtitle,
-            'description' => $this->edu_description ?: null,
-            'metrics' => $metrics,
-            'certificate_link' => $certLink,
-        ]);
-
-        $this->reset([
-            'edu_title', 'edu_subtitle', 'edu_description',
-            'edu_gpa', 'edu_eprt', 'edu_tak', 'edu_final_grade',
-            'edu_certificate_link'
-        ]);
+        $this->validate(['edu_title' => 'required', 'edu_subtitle' => 'required']);
+        $metrics = $this->_buildEduMetrics();
+        $certLink = $this->edu_type !== 'education' ? ($this->edu_certificate_link ?: null) : null;
+        Education::create(['type' => $this->edu_type, 'title' => $this->edu_title, 'subtitle' => $this->edu_subtitle, 'description' => $this->edu_description ?: null, 'metrics' => $metrics, 'certificate_link' => $certLink]);
+        $this->_resetEduForm();
         session()->flash('msg_edu', 'Pendidikan/Sertifikasi berhasil ditambahkan!');
+    }
+
+    public function editEducation($id)
+    {
+        $edu = Education::find($id);
+        $this->editingEduId = $id;
+        $this->edu_type = $edu->type;
+        $this->edu_title = $edu->title;
+        $this->edu_subtitle = $edu->subtitle;
+        $this->edu_description = $edu->description ?? '';
+        $this->edu_certificate_link = $edu->certificate_link ?? '';
+        if ($edu->metrics) {
+            if (isset($edu->metrics['GPA'])) {
+                $this->edu_level = 'university';
+                $this->edu_gpa = $edu->metrics['GPA'] ?? '';
+                $this->edu_eprt = $edu->metrics['EPRT'] ?? '';
+                $this->edu_tak = $edu->metrics['TAK Score'] ?? '';
+            } else {
+                $this->edu_level = 'school';
+                $this->edu_final_grade = $edu->metrics['Final Grade'] ?? '';
+            }
+        }
+    }
+
+    public function updateEducation()
+    {
+        $this->validate(['edu_title' => 'required', 'edu_subtitle' => 'required']);
+        $metrics = $this->_buildEduMetrics();
+        $certLink = $this->edu_type !== 'education' ? ($this->edu_certificate_link ?: null) : null;
+        Education::find($this->editingEduId)?->update(['type' => $this->edu_type, 'title' => $this->edu_title, 'subtitle' => $this->edu_subtitle, 'description' => $this->edu_description ?: null, 'metrics' => $metrics, 'certificate_link' => $certLink]);
+        $this->_resetEduForm();
+        session()->flash('msg_edu', 'Data berhasil diperbarui!');
+    }
+
+    public function cancelEditEducation()
+    {
+        $this->_resetEduForm();
+    }
+
+    private function _buildEduMetrics()
+    {
+        if ($this->edu_type !== 'education') return null;
+        $metrics = $this->edu_level === 'university'
+            ? array_filter(['GPA' => $this->edu_gpa, 'EPRT' => $this->edu_eprt, 'TAK Score' => $this->edu_tak])
+            : array_filter(['Final Grade' => $this->edu_final_grade]);
+        return empty($metrics) ? null : $metrics;
+    }
+
+    private function _resetEduForm()
+    {
+        $this->reset(['edu_title', 'edu_subtitle', 'edu_description', 'edu_gpa', 'edu_eprt', 'edu_tak', 'edu_final_grade', 'edu_certificate_link', 'editingEduId']);
+        $this->edu_type = 'education';
+        $this->edu_level = 'university';
     }
 
     public function deleteEducation($id)
@@ -215,28 +260,43 @@ new class extends Component
     // --- PROJECTS CRUD ---
     public function addProject()
     {
-        $this->validate([
-            'proj_title' => 'required|min:2',
-            'proj_description' => 'required|min:5',
-            'proj_image' => 'nullable|image|max:2048',
-        ]);
-
-        $imagePath = null;
-        if ($this->proj_image) {
-            $imagePath = $this->proj_image->store('projects', 'public');
-        }
-
-        Project::create([
-            'title' => $this->proj_title,
-            'category' => $this->proj_category,
-            'description' => $this->proj_description,
-            'url' => $this->proj_url ?: null,
-            'tech_stack' => array_values($this->proj_selected_skills),
-            'image_path' => $imagePath,
-        ]);
-
+        $this->validate(['proj_title' => 'required|min:2', 'proj_description' => 'required|min:5', 'proj_image' => 'nullable|image|max:2048']);
+        $imagePath = $this->proj_image ? $this->proj_image->store('projects', 'public') : null;
+        Project::create(['title' => $this->proj_title, 'category' => $this->proj_category, 'description' => $this->proj_description, 'url' => $this->proj_url ?: null, 'tech_stack' => array_values($this->proj_selected_skills), 'image_path' => $imagePath]);
         $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image']);
         session()->flash('msg_proj', 'Proyek berhasil ditambahkan!');
+    }
+
+    public function editProject($id)
+    {
+        $proj = Project::find($id);
+        $this->editingProjId = $id;
+        $this->proj_title = $proj->title;
+        $this->proj_category = $proj->category;
+        $this->proj_description = $proj->description;
+        $this->proj_url = $proj->url ?? '';
+        $this->proj_selected_skills = $proj->tech_stack ?? [];
+    }
+
+    public function updateProject()
+    {
+        $this->validate(['proj_title' => 'required|min:2', 'proj_description' => 'required|min:5', 'proj_image' => 'nullable|image|max:2048']);
+        $proj = Project::find($this->editingProjId);
+        $data = ['title' => $this->proj_title, 'category' => $this->proj_category, 'description' => $this->proj_description, 'url' => $this->proj_url ?: null, 'tech_stack' => array_values($this->proj_selected_skills)];
+        if ($this->proj_image) {
+            if ($proj->image_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($proj->image_path);
+            $data['image_path'] = $this->proj_image->store('projects', 'public');
+        }
+        $proj->update($data);
+        $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image', 'editingProjId']);
+        $this->proj_category = 'Web Development';
+        session()->flash('msg_proj', 'Proyek berhasil diperbarui!');
+    }
+
+    public function cancelEditProject()
+    {
+        $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image', 'editingProjId']);
+        $this->proj_category = 'Web Development';
     }
 
     public function deleteProject($id)
@@ -557,7 +617,14 @@ new class extends Component
                                     <option value="Management & Supporting">Management & Supporting</option>
                                 </select>
                             </div>
-                            <button wire:click="addSkill" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Skill</button>
+                            @if($editingSkillId)
+                                <div class="flex gap-2">
+                                    <button wire:click="updateSkill" class="flex-1 bg-amber-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-amber-400 transition-colors"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
+                                    <button wire:click="cancelEditSkill" class="px-4 bg-slate-700 text-slate-300 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-600 transition-colors"><i class="fa-solid fa-xmark"></i> Batal</button>
+                                </div>
+                            @else
+                                <button wire:click="addSkill" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Skill</button>
+                            @endif
                         </div>
                         <div class="lg:col-span-8 w-full">
                             <label class="text-xs text-slate-400 block mb-1">Class Icon (FontAwesome)</label>
@@ -590,7 +657,7 @@ new class extends Component
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         @foreach($this->skills as $skill)
-                            <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between group">
+                            <div class="bg-slate-900/50 border {{ $editingSkillId === $skill->id ? 'border-amber-500/70' : 'border-slate-700' }} rounded-xl p-4 flex items-center justify-between group">
                                 <div class="flex items-center gap-3">
                                     <i class="{{ $skill->icon }} text-2xl text-teal-500"></i>
                                     <div>
@@ -598,7 +665,10 @@ new class extends Component
                                         <span class="text-xs text-slate-400">{{ $skill->category }}</span>
                                     </div>
                                 </div>
-                                <button wire:click="deleteSkill({{ $skill->id }})" wire:confirm="Yakin ingin menghapus skill ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                                <div class="flex flex-col gap-1">
+                                    <button wire:click="editSkill({{ $skill->id }})" class="text-amber-400 hover:text-amber-300 transition-colors text-xs"><i class="fa-solid fa-pen"></i></button>
+                                    <button wire:click="deleteSkill({{ $skill->id }})" wire:confirm="Yakin ingin menghapus skill ini?" class="text-red-500 hover:text-red-400 transition-colors text-xs"><i class="fa-solid fa-trash"></i></button>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -676,16 +746,26 @@ new class extends Component
                             <input type="text" wire:model="exp_period" placeholder="Periode (contoh: Agustus 2023 - Sekarang) *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
                         </div>
                         <textarea wire:model="exp_description" placeholder="Deskripsi peran dan tanggung jawab..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none h-20"></textarea>
-                        <button wire:click="addExperience" class="w-full bg-teal-500 text-slate-900 py-2 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah</button>
+                        @if($editingExpId)
+                            <div class="flex gap-2">
+                                <button wire:click="updateExperience" class="flex-1 bg-amber-500 text-slate-900 py-2 rounded-lg text-sm font-bold hover:bg-amber-400 transition-colors"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+                                <button wire:click="cancelEditExperience" class="px-4 bg-slate-700 text-slate-300 py-2 rounded-lg text-sm font-bold hover:bg-slate-600 transition-colors"><i class="fa-solid fa-xmark"></i> Batal</button>
+                            </div>
+                        @else
+                            <button wire:click="addExperience" class="w-full bg-teal-500 text-slate-900 py-2 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah</button>
+                        @endif
                     </div>
                     <div class="space-y-3">
                         @foreach($this->experiences as $exp)
-                            <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
+                            <div class="bg-slate-900/50 border {{ $editingExpId === $exp->id ? 'border-amber-500/70' : 'border-slate-700' }} rounded-xl p-4 flex items-center justify-between">
                                 <div>
                                     <h3 class="text-white font-bold text-sm">{{ $exp->role }}</h3>
                                     <p class="text-xs text-slate-400">{{ $exp->company }} | {{ $exp->period }}</p>
                                 </div>
-                                <button wire:click="deleteExperience({{ $exp->id }})" wire:confirm="Yakin hapus experience ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                                <div class="flex gap-2">
+                                    <button wire:click="editExperience({{ $exp->id }})" class="text-amber-400 hover:text-amber-300 transition-colors"><i class="fa-solid fa-pen text-sm"></i></button>
+                                    <button wire:click="deleteExperience({{ $exp->id }})" wire:confirm="Yakin hapus experience ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -817,16 +897,26 @@ new class extends Component
                             </div>
                         @endif
 
-                        <button wire:click="addEducation" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Entri</button>
+                        @if($editingEduId)
+                            <div class="flex gap-2">
+                                <button wire:click="updateEducation" class="flex-1 bg-amber-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-amber-400 transition-colors"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
+                                <button wire:click="cancelEditEducation" class="px-4 bg-slate-700 text-slate-300 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-600 transition-colors"><i class="fa-solid fa-xmark"></i> Batal</button>
+                            </div>
+                        @else
+                            <button wire:click="addEducation" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Entri</button>
+                        @endif
                     </div>
                     <div class="space-y-3">
                         @foreach($this->educations as $edu)
-                            <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
+                            <div class="bg-slate-900/50 border {{ $editingEduId === $edu->id ? 'border-amber-500/70' : 'border-slate-700' }} rounded-xl p-4 flex items-center justify-between">
                                 <div>
                                     <h3 class="text-white font-bold text-sm">{{ $edu->title }}</h3>
                                     <p class="text-xs text-slate-400">{{ $edu->subtitle }} | <span class="capitalize text-amber-500">{{ $edu->type }}</span></p>
                                 </div>
-                                <button wire:click="deleteEducation({{ $edu->id }})" wire:confirm="Yakin hapus education ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                                <div class="flex gap-2">
+                                    <button wire:click="editEducation({{ $edu->id }})" class="text-amber-400 hover:text-amber-300 transition-colors"><i class="fa-solid fa-pen text-sm"></i></button>
+                                    <button wire:click="deleteEducation({{ $edu->id }})" wire:confirm="Yakin hapus education ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -1053,12 +1143,19 @@ new class extends Component
                             <div wire:loading wire:target="proj_image" class="text-xs text-amber-400 mt-1"><i class="fa-solid fa-spinner fa-spin"></i> Mengupload gambar...</div>
                         </div>
 
-                        <button wire:click="addProject" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 active:scale-95 transition-all"><i class="fa-solid fa-plus"></i> Tambah Project</button>
+                        @if($editingProjId)
+                            <div class="flex gap-2">
+                                <button wire:click="updateProject" class="flex-1 bg-amber-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-amber-400 active:scale-95 transition-all"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
+                                <button wire:click="cancelEditProject" class="px-4 bg-slate-700 text-slate-300 py-2.5 rounded-lg text-sm font-bold hover:bg-slate-600 transition-all"><i class="fa-solid fa-xmark"></i> Batal</button>
+                            </div>
+                        @else
+                            <button wire:click="addProject" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 active:scale-95 transition-all"><i class="fa-solid fa-plus"></i> Tambah Project</button>
+                        @endif
                     </div>
 
                     <div class="space-y-4">
                         @foreach($this->projects as $project)
-                            <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between">
+                            <div class="bg-slate-900/50 border {{ $editingProjId === $project->id ? 'border-amber-500/70' : 'border-slate-700' }} rounded-xl p-4 flex items-center justify-between">
                                 <div class="flex items-center gap-4">
                                     @if($project->image_path)
                                         <img src="{{ Storage::url($project->image_path) }}" class="w-12 h-12 object-cover rounded-lg border border-slate-700">
@@ -1068,7 +1165,10 @@ new class extends Component
                                         <p class="text-sm text-slate-400">{{ $project->category }}</p>
                                     </div>
                                 </div>
-                                <button wire:click="deleteProject({{ $project->id }})" wire:confirm="Yakin hapus project ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                                <div class="flex gap-2">
+                                    <button wire:click="editProject({{ $project->id }})" class="text-amber-400 hover:text-amber-300 transition-colors"><i class="fa-solid fa-pen text-sm"></i></button>
+                                    <button wire:click="deleteProject({{ $project->id }})" wire:confirm="Yakin hapus project ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash text-sm"></i></button>
+                                </div>
                             </div>
                         @endforeach
                     </div>

@@ -88,7 +88,7 @@ class PortfolioCRUDTest extends TestCase
             ->set('proj_title', 'Sistem Pendaftaran')
             ->set('proj_category', 'Web Development')
             ->set('proj_description', 'Sistem pendaftaran berbasis web.')
-            ->set('proj_tech_stack', 'Laravel, Livewire, Tailwind')
+            ->set('proj_selected_skills', ['Laravel', 'Livewire', 'Tailwind'])
             ->call('addProject')
             ->assertHasNoErrors();
 
