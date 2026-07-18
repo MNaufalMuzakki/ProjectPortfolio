@@ -116,4 +116,22 @@ class PortfolioCRUDTest extends TestCase
         $this->assertNotNull($profile->avatar_path);
         \Illuminate\Support\Facades\Storage::disk('public')->assertExists($profile->avatar_path);
     }
+
+    public function test_can_add_education(): void
+    {
+        Livewire::test('portfolio-page')
+            ->set('edu_type', 'education')
+            ->set('edu_title', 'SMPN 30')
+            ->set('edu_subtitle', 'juli 2000 - juli 2001')
+            ->set('edu_description', '')
+            ->set('edu_level', 'school')
+            ->set('edu_final_grade', '89')
+            ->call('addEducation')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('education', [
+            'type' => 'education',
+            'title' => 'SMPN 30',
+        ]);
+    }
 }

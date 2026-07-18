@@ -95,6 +95,25 @@ new class extends Component
         $this->dispatch('toast', message: $message, type: 'error');
     }
 
+    private function runValidation($rules, array $messages = []): bool
+    {
+        try {
+            $this->validate($rules, $messages);
+            return true;
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $firstError = collect($e->errors())->flatten()->first();
+            $this->dispatch('toast', message: $firstError ?: 'Input tidak valid.', type: 'error');
+            foreach ($e->errors() as $key => $msgs) {
+                foreach ($msgs as $msg) {
+                    $this->addError($key, $msg);
+                }
+            }
+            return false;
+        }
+    }
+
+
+
     public function saveProfile()
     {
         $this->profile_github = $this->blankToNull($this->profile_github);
@@ -103,7 +122,7 @@ new class extends Component
         $this->profile_instagram = $this->blankToNull($this->profile_instagram);
         $this->profile_address = $this->blankToNull($this->profile_address);
 
-        $this->validate([
+        $rules = [
             'profile_name' => 'required|string|max:255',
             'profile_role' => 'required|string|max:255',
             'profile_bio' => 'required|string|max:2000',
@@ -114,7 +133,8 @@ new class extends Component
             'profile_instagram' => 'nullable|string|max:100',
             'profile_address' => 'nullable|string|max:255',
             'profile_avatar' => 'nullable|image|max:2048',
-        ], [
+        ];
+        $messages = [
             'profile_name.required' => 'Nama lengkap wajib diisi.',
             'profile_role.required' => 'Peran / subjudul wajib diisi.',
             'profile_bio.required' => 'Bio wajib diisi.',
@@ -125,7 +145,11 @@ new class extends Component
             'profile_whatsapp.regex' => 'WhatsApp hanya boleh berisi angka (boleh pakai + atau spasi).',
             'profile_avatar.image' => 'Avatar harus berupa gambar.',
             'profile_avatar.max' => 'Ukuran avatar maksimal 2MB.',
-        ]);
+        ];
+
+        if (!$this->runValidation($rules, $messages)) {
+            return;
+        }
 
         try {
             $profile = Profile::first();
@@ -185,7 +209,9 @@ new class extends Component
 
     public function addSkill()
     {
-        $this->validate($this->skillRules(), $this->skillMessages());
+        if (!$this->runValidation($this->skillRules(), $this->skillMessages())) {
+            return;
+        }
         try {
             Skill::create(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
             $this->reset(['skill_name', 'skill_icon']);
@@ -219,7 +245,9 @@ new class extends Component
 
     public function updateSkill()
     {
-        $this->validate($this->skillRules(), $this->skillMessages());
+        if (!$this->runValidation($this->skillRules(), $this->skillMessages())) {
+            return;
+        }
         try {
             $skill = Skill::find($this->editingSkillId);
             if (!$skill) {
@@ -280,7 +308,9 @@ new class extends Component
 
     public function addExperience()
     {
-        $this->validate($this->experienceRules(), $this->experienceMessages());
+        if (!$this->runValidation($this->experienceRules(), $this->experienceMessages())) {
+            return;
+        }
         try {
             Experience::create([
                 'role' => $this->exp_role,
@@ -320,7 +350,9 @@ new class extends Component
 
     public function updateExperience()
     {
-        $this->validate($this->experienceRules(), $this->experienceMessages());
+        if (!$this->runValidation($this->experienceRules(), $this->experienceMessages())) {
+            return;
+        }
         try {
             $exp = Experience::find($this->editingExpId);
             if (!$exp) {
@@ -408,7 +440,9 @@ new class extends Component
         $this->edu_tak = $this->blankToNull($this->edu_tak);
         $this->edu_final_grade = $this->blankToNull($this->edu_final_grade);
 
-        $this->validate($this->educationRules(), $this->educationMessages());
+        if (!$this->runValidation($this->educationRules(), $this->educationMessages())) {
+            return;
+        }
         try {
             $metrics = $this->_buildEduMetrics();
             $certLink = $this->edu_type !== 'education' ? $this->edu_certificate_link : null;
@@ -474,7 +508,9 @@ new class extends Component
         $this->edu_tak = $this->blankToNull($this->edu_tak);
         $this->edu_final_grade = $this->blankToNull($this->edu_final_grade);
 
-        $this->validate($this->educationRules(), $this->educationMessages());
+        if (!$this->runValidation($this->educationRules(), $this->educationMessages())) {
+            return;
+        }
         try {
             $edu = Education::find($this->editingEduId);
             if (!$edu) {
@@ -571,7 +607,9 @@ new class extends Component
     public function addProject()
     {
         $this->proj_url = $this->blankToNull($this->proj_url);
-        $this->validate($this->projectRules(), $this->projectMessages());
+        if (!$this->runValidation($this->projectRules(), $this->projectMessages())) {
+            return;
+        }
         try {
             $imagePath = $this->proj_image ? $this->proj_image->store('projects', 'public') : null;
             Project::create([
@@ -618,7 +656,9 @@ new class extends Component
     public function updateProject()
     {
         $this->proj_url = $this->blankToNull($this->proj_url);
-        $this->validate($this->projectRules(), $this->projectMessages());
+        if (!$this->runValidation($this->projectRules(), $this->projectMessages())) {
+            return;
+        }
         try {
             $proj = Project::find($this->editingProjId);
             if (!$proj) {
@@ -1286,25 +1326,10 @@ new class extends Component
                                         @endphp
                                         <div class="grid {{ $metricCount === 1 ? 'grid-cols-1 max-w-[150px] mx-auto' : 'grid-cols-3' }} gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-850 text-center">
                                             @foreach($edu->metrics as $key => $value)
-                                                @php
-                                                    $metricUrls = [
-                                                        'GPA' => 'https://drive.google.com/file/d/1jlXrOmKrob637b5eHfDO_yVWFnq9zrrZ/view?usp=drive_link',
-                                                        'EPRT' => 'https://drive.google.com/file/d/1elpXLMgUG90eMd9A5nBRZ_5Tby4pN1NQ/view?usp=drive_link',
-                                                        'TAK Score' => 'https://drive.google.com/file/d/152FsaXSpO6aZ-yax1m6-eiDCMFAdLd6o/view?usp=drive_link'
-                                                    ];
-                                                    $url = $metricUrls[$key] ?? null;
-                                                @endphp
-                                                @if($url)
-                                                    <a href="{{ $url }}" target="_blank" class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850 hover:border-brand-500/40 hover:shadow-md hover:shadow-brand-500/5 active:scale-95 transition-all duration-300 group outline-none flex flex-col items-center justify-center">
-                                                        <span class="block text-sm sm:text-base font-black text-brand-600 dark:text-brand-400 group-hover:text-brand-500 transition-colors">{{ $value }}</span>
-                                                        <span class="text-[10px] font-mono text-slate-550 dark:text-slate-550 uppercase tracking-wider block mt-0.5">{{ $key }}</span>
-                                                    </a>
-                                                @else
-                                                    <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850 flex flex-col items-center justify-center">
-                                                        <span class="block text-sm sm:text-base font-black text-brand-600 dark:text-brand-400">{{ $value }}</span>
-                                                        <span class="text-[10px] font-mono text-slate-550 dark:text-slate-550 uppercase tracking-wider block mt-0.5">{{ $key }}</span>
-                                                    </div>
-                                                @endif
+                                                <div class="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850 hover:border-brand-500/40 hover:shadow-md hover:shadow-brand-500/5 transition-all duration-300 flex flex-col items-center justify-center select-none cursor-default">
+                                                    <span class="block text-sm sm:text-base font-black text-brand-600 dark:text-brand-400">{{ $value }}</span>
+                                                    <span class="text-[10px] font-mono text-slate-550 dark:text-slate-550 uppercase tracking-wider block mt-0.5">{{ $key }}</span>
+                                                </div>
                                             @endforeach
                                         </div>
                                     @endif
@@ -1659,6 +1684,7 @@ new class extends Component
 
     <!-- Toast Notification System -->
     <div
+        wire:ignore
         x-data="{
             toasts: [],
             add(message, type = 'success') {
@@ -1677,9 +1703,6 @@ new class extends Component
             @if(session()->has('msg_exp')) $nextTick(() => add('{{ session('msg_exp') }}', '{{ str_contains(session('msg_exp'), 'Gagal') ? 'error' : 'success' }}')); @endif
             @if(session()->has('msg_edu')) $nextTick(() => add('{{ session('msg_edu') }}', '{{ str_contains(session('msg_edu'), 'Gagal') ? 'error' : 'success' }}')); @endif
             @if(session()->has('msg_proj')) $nextTick(() => add('{{ session('msg_proj') }}', '{{ str_contains(session('msg_proj'), 'Gagal') ? 'error' : 'success' }}')); @endif
-            @if($errors->any())
-                $nextTick(() => add('Input tidak valid. Silakan periksa kembali form.', 'error'));
-            @endif
         "
         class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none"
     >
