@@ -500,26 +500,112 @@ new class extends Component
                     </div>
                     
                     <!-- Form Tambah Skill -->
-                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                        <div>
-                            <label class="text-xs text-slate-400 block mb-1">Nama Skill</label>
-                            <input type="text" wire:model="skill_name" placeholder="Misal: React" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                    <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-700 mb-6 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                        <div class="lg:col-span-4 space-y-4">
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Nama Skill</label>
+                                <input type="text" wire:model="skill_name" placeholder="Misal: React" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 block mb-1">Kategori</label>
+                                <select wire:model="skill_category" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                    <option value="Web Development">Web Development</option>
+                                    <option value="Game Development">Game Development</option>
+                                    <option value="Multimedia & Creative">Multimedia & Creative</option>
+                                    <option value="Management & Supporting">Management & Supporting</option>
+                                </select>
+                            </div>
+                            <button wire:click="addSkill" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Skill</button>
                         </div>
-                        <div>
+                        <div class="lg:col-span-8 w-full">
                             <label class="text-xs text-slate-400 block mb-1">Class Icon (FontAwesome)</label>
-                            <input type="text" wire:model="skill_icon" placeholder="fa-brands fa-react" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="text-xs text-slate-400 block mb-1">Kategori</label>
-                            <select wire:model="skill_category" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                                <option value="Web Development">Web Development</option>
-                                <option value="Game Development">Game Development</option>
-                                <option value="Multimedia & Creative">Multimedia & Creative</option>
-                                <option value="Management & Supporting">Management & Supporting</option>
-                            </select>
-                        </div>
-                        <div>
-                            <button wire:click="addSkill" class="w-full bg-teal-500 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah</button>
+                            <input type="text" wire:model="skill_icon" placeholder="fa-brands fa-react" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none mb-3">
+                            
+                            <!-- Quick Select Icons -->
+                            <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800">
+                                <span class="text-[10px] text-slate-400 block mb-2 font-bold uppercase tracking-wider">Pilih Ikon Cepat:</span>
+                                <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                                    <!-- Web -->
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-php')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="PHP">
+                                        <i class="fa-brands fa-php text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">PHP</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-laravel')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Laravel">
+                                        <i class="fa-brands fa-laravel text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Laravel</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-html5')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="HTML5">
+                                        <i class="fa-brands fa-html5 text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">HTML</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-css3-alt')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="CSS3">
+                                        <i class="fa-brands fa-css3-alt text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">CSS</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-js')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="JavaScript">
+                                        <i class="fa-brands fa-js text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">JS</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-react')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="React">
+                                        <i class="fa-brands fa-react text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">React</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-database')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Database">
+                                        <i class="fa-solid fa-database text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">DB</span>
+                                    </button>
+                                    
+                                    <!-- Game -->
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-gamepad')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Gamepad/Unity">
+                                        <i class="fa-solid fa-gamepad text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Gamepad</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-book-open')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Book/RenPy">
+                                        <i class="fa-solid fa-book-open text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Book</span>
+                                    </button>
+
+                                    <!-- Creative -->
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-brands fa-figma')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Figma">
+                                        <i class="fa-brands fa-figma text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Figma</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-video')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Video / Premiere">
+                                        <i class="fa-solid fa-video text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Video</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-clapperboard')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Clapperboard">
+                                        <i class="fa-solid fa-clapperboard text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Clapper</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-palette')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Palette/Art">
+                                        <i class="fa-solid fa-palette text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Art</span>
+                                    </button>
+
+                                    <!-- Management -->
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-robot')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="AI/Robot">
+                                        <i class="fa-solid fa-robot text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">AI Tools</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-file-excel')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Excel">
+                                        <i class="fa-solid fa-file-excel text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Excel</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-file-word')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Word">
+                                        <i class="fa-solid fa-file-word text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Word</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-vial')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Testing">
+                                        <i class="fa-solid fa-vial text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Testing</span>
+                                    </button>
+                                    <button type="button" wire:click="$set('skill_icon', 'fa-solid fa-users')" class="p-2 bg-slate-800 hover:bg-teal-500/20 hover:text-teal-400 rounded-lg text-xs text-slate-300 border border-slate-700 flex flex-col items-center gap-1 transition-all" title="Teamwork">
+                                        <i class="fa-solid fa-users text-base"></i>
+                                        <span class="text-[9px] truncate max-w-full">Team</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
