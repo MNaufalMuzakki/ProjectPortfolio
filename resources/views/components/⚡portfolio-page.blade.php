@@ -55,7 +55,7 @@ new class extends Component
     public $proj_category = 'Web Development';
     public $proj_description = '';
     public $proj_url = '';
-    public $proj_tech_stack = '';
+    public $proj_selected_skills = [];
     public $proj_image;
 
     public function mount()
@@ -216,9 +216,8 @@ new class extends Component
     public function addProject()
     {
         $this->validate([
-            'proj_title' => 'required',
-            'proj_description' => 'required',
-            'proj_image' => 'nullable|image|max:1024', // 1MB Max
+            'proj_description' => 'required|min:5',
+            'proj_image' => 'nullable|image|max:2048',
         ]);
 
         $imagePath = null;
@@ -226,18 +225,16 @@ new class extends Component
             $imagePath = $this->proj_image->store('projects', 'public');
         }
 
-        $techArray = array_filter(array_map('trim', explode(',', $this->proj_tech_stack)));
-
         Project::create([
-            'title' => $this->proj_title,
+            'title' => $this->proj_category,
             'category' => $this->proj_category,
             'description' => $this->proj_description,
             'url' => $this->proj_url ?: null,
-            'tech_stack' => array_values($techArray),
+            'tech_stack' => array_values($this->proj_selected_skills),
             'image_path' => $imagePath,
         ]);
 
-        $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_tech_stack', 'proj_image']);
+        $this->reset(['proj_description', 'proj_url', 'proj_selected_skills', 'proj_image']);
         session()->flash('msg_proj', 'Proyek berhasil ditambahkan!');
     }
 
@@ -970,31 +967,67 @@ new class extends Component
                         @endif
                     </div>
 
-                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-3">
-                            <input type="text" wire:model="proj_title" placeholder="Judul Project *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                            
-                            <select wire:model="proj_category" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                                <option value="Web Development">Web Development</option>
-                                <option value="Game Development">Game Development</option>
-                                <option value="Videography">Videography</option>
-                                <option value="Other">Other</option>
-                            </select>
-                            
-                            <input type="text" wire:model="proj_url" placeholder="Link URL (opsional)" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                            
-                            <input type="text" wire:model="proj_tech_stack" placeholder="Tech Stack (pisah dengan koma: Laravel, PHP)" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                        </div>
-                        <div class="flex flex-col gap-3">
-                            <textarea wire:model="proj_description" placeholder="Deskripsi project *" class="flex-1 w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none"></textarea>
-                            
-                            <div class="flex items-center gap-3">
-                                <input type="file" wire:model="proj_image" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700">
-                                <div wire:loading wire:target="proj_image" class="text-xs text-amber-500">Uploading...</div>
+                    <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-700 mb-6 space-y-4">
+                        <!-- 1. Pilih Bidang -->
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1.5">Pilih Bidang Project</label>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach(['Web Development', 'Game Development', 'Videography'] as $cat)
+                                    <button type="button" wire:click="$set('proj_category', '{{ $cat }}')"
+                                        class="px-4 py-2 rounded-lg text-sm font-bold border transition-all duration-200 {{ $proj_category === $cat ? 'bg-teal-500 text-slate-900 border-teal-500 shadow-lg shadow-teal-500/20' : 'bg-slate-800 text-slate-300 border-slate-700 hover:border-teal-500/50' }}">
+                                        @if($cat === 'Web Development') <i class="fa-solid fa-globe text-xs mr-1"></i>
+                                        @elseif($cat === 'Game Development') <i class="fa-solid fa-gamepad text-xs mr-1"></i>
+                                        @else <i class="fa-solid fa-clapperboard text-xs mr-1"></i>
+                                        @endif
+                                        {{ $cat }}
+                                    </button>
+                                @endforeach
                             </div>
-                            
-                            <button wire:click="addProject" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Project</button>
                         </div>
+
+                        <!-- 2. Pilih Teknologi dari Skills -->
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1.5">Teknologi yang Dipakai <span class="text-slate-600">(dari Skills & Expertise)</span></label>
+                            @if($this->skills->isEmpty())
+                                <p class="text-xs text-slate-500 italic">Belum ada skills. Tambahkan dulu di bagian Skills & Expertise.</p>
+                            @else
+                                <div class="flex flex-wrap gap-2 p-3 bg-slate-950/60 rounded-lg border border-slate-800">
+                                    @foreach($this->skills as $skill)
+                                        <label class="flex items-center gap-1.5 cursor-pointer px-2.5 py-1.5 rounded-lg border transition-all duration-150 text-xs font-semibold
+                                            {{ in_array($skill->name, $proj_selected_skills) ? 'bg-teal-500/20 border-teal-500/60 text-teal-300' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500' }}">
+                                            <input type="checkbox" wire:model="proj_selected_skills" value="{{ $skill->name }}" class="hidden">
+                                            <i class="{{ $skill->icon }} text-xs {{ in_array($skill->name, $proj_selected_skills) ? 'text-teal-400' : '' }}"></i>
+                                            {{ $skill->name }}
+                                        </label>
+                                    @endforeach
+                                </div>
+                                @if(!empty($proj_selected_skills))
+                                    <p class="text-[10px] text-slate-500 mt-1">Dipilih: <span class="text-teal-400 font-semibold">{{ implode(', ', $proj_selected_skills) }}</span></p>
+                                @endif
+                            @endif
+                        </div>
+
+                        <!-- 3. Deskripsi -->
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1.5">Deskripsi Project *</label>
+                            <textarea wire:model="proj_description" placeholder="Jelaskan tentang project ini, apa yang dibangun, dan tujuannya..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none h-24 resize-none"></textarea>
+                            @error('proj_description') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- 4. Link -->
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1.5">Link Project (Google Drive / GitHub / URL - Opsional)</label>
+                            <input type="text" wire:model="proj_url" placeholder="contoh: https://github.com/... atau https://drive.google.com/..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                        </div>
+
+                        <!-- 5. Gambar -->
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1.5">Gambar / Thumbnail Project (Opsional, maks. 2MB)</label>
+                            <input type="file" wire:model="proj_image" accept="image/*" class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-teal-300 hover:file:bg-slate-700 file:cursor-pointer">
+                            <div wire:loading wire:target="proj_image" class="text-xs text-amber-400 mt-1"><i class="fa-solid fa-spinner fa-spin"></i> Mengupload gambar...</div>
+                        </div>
+
+                        <button wire:click="addProject" class="w-full bg-teal-500 text-slate-900 py-2.5 rounded-lg text-sm font-bold hover:bg-teal-400 active:scale-95 transition-all"><i class="fa-solid fa-plus"></i> Tambah Project</button>
                     </div>
 
                     <div class="space-y-4">
