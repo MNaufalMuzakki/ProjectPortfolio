@@ -82,8 +82,21 @@ new class extends Component
     {
         $this->editMode = !$this->editMode;
     }
+
+    private function blankToNull(?string $value): ?string
+    {
+        $value = is_string($value) ? trim($value) : $value;
+        return $value === '' || $value === null ? null : $value;
+    }
+
     public function saveProfile()
     {
+        $this->profile_github = $this->blankToNull($this->profile_github);
+        $this->profile_linkedin = $this->blankToNull($this->profile_linkedin);
+        $this->profile_whatsapp = $this->blankToNull($this->profile_whatsapp);
+        $this->profile_instagram = $this->blankToNull($this->profile_instagram);
+        $this->profile_address = $this->blankToNull($this->profile_address);
+
         $this->validate([
             'profile_name' => 'required|string|max:255',
             'profile_role' => 'required|string|max:255',
@@ -91,61 +104,88 @@ new class extends Component
             'profile_email' => 'required|email|max:255',
             'profile_github' => 'nullable|url|max:255',
             'profile_linkedin' => 'nullable|url|max:255',
-            'profile_whatsapp' => 'nullable|string|max:50',
+            'profile_whatsapp' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s]+$/'],
             'profile_instagram' => 'nullable|string|max:100',
             'profile_address' => 'nullable|string|max:255',
             'profile_avatar' => 'nullable|image|max:2048',
         ], [
             'profile_name.required' => 'Nama lengkap wajib diisi.',
-            'profile_role.required' => 'Role / subtitle wajib diisi.',
+            'profile_role.required' => 'Peran / subjudul wajib diisi.',
             'profile_bio.required' => 'Bio wajib diisi.',
             'profile_email.required' => 'Email wajib diisi.',
             'profile_email.email' => 'Format email tidak valid.',
-            'profile_github.url' => 'URL GitHub tidak valid.',
-            'profile_linkedin.url' => 'URL LinkedIn tidak valid.',
+            'profile_github.url' => 'URL GitHub harus berupa link valid (contoh: https://github.com/...).',
+            'profile_linkedin.url' => 'URL LinkedIn harus berupa link valid (contoh: https://linkedin.com/in/...).',
+            'profile_whatsapp.regex' => 'WhatsApp hanya boleh berisi angka (boleh pakai + atau spasi).',
             'profile_avatar.image' => 'Avatar harus berupa gambar.',
             'profile_avatar.max' => 'Ukuran avatar maksimal 2MB.',
         ]);
 
         $profile = Profile::first();
-        if ($profile) {
-            $data = [
-                'name' => $this->profile_name,
-                'role' => $this->profile_role,
-                'bio' => $this->profile_bio,
-                'github' => $this->profile_github,
-                'linkedin' => $this->profile_linkedin,
-                'email' => $this->profile_email,
-                'whatsapp' => $this->profile_whatsapp,
-                'instagram' => $this->profile_instagram,
-                'address' => $this->profile_address,
-            ];
-
-            if ($this->profile_avatar) {
-                if ($profile->avatar_path) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($profile->avatar_path);
-                }
-                $path = $this->profile_avatar->store('avatars', 'public');
-                $data['avatar_path'] = $path;
-            }
-
-            $profile->update($data);
-            $this->profile_avatar = null;
-
-            session()->flash('msg_profile', 'Profil berhasil disimpan!');
+        if (!$profile) {
+            session()->flash('msg_profile', 'Profil tidak ditemukan.');
+            return;
         }
+
+        $data = [
+            'name' => $this->profile_name,
+            'role' => $this->profile_role,
+            'bio' => $this->profile_bio,
+            'github' => $this->profile_github,
+            'linkedin' => $this->profile_linkedin,
+            'email' => $this->profile_email,
+            'whatsapp' => $this->profile_whatsapp,
+            'instagram' => $this->profile_instagram,
+            'address' => $this->profile_address,
+        ];
+
+        if ($this->profile_avatar) {
+            if ($profile->avatar_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($profile->avatar_path);
+            }
+            $data['avatar_path'] = $this->profile_avatar->store('avatars', 'public');
+        }
+
+        $profile->update($data);
+        $this->profile_avatar = null;
+        session()->flash('msg_profile', 'Profil berhasil disimpan!');
     }
+
+    private function skillRules(): array
+    {
+        return [
+            'skill_name' => 'required|string|max:100',
+            'skill_icon' => 'required|string|max:100',
+            'skill_category' => 'required|in:Web Development,Game Development,Multimedia & Creative,Management & Supporting',
+        ];
+    }
+
+    private function skillMessages(): array
+    {
+        return [
+            'skill_name.required' => 'Nama keahlian wajib diisi.',
+            'skill_icon.required' => 'Class ikon wajib diisi.',
+            'skill_category.required' => 'Kategori wajib dipilih.',
+            'skill_category.in' => 'Kategori tidak valid.',
+        ];
+    }
+
     public function addSkill()
     {
-        $this->validate(['skill_name' => 'required', 'skill_icon' => 'required', 'skill_category' => 'required']);
+        $this->validate($this->skillRules(), $this->skillMessages());
         Skill::create(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
         $this->reset(['skill_name', 'skill_icon']);
-        session()->flash('msg_skill', 'Skill berhasil ditambahkan!');
+        session()->flash('msg_skill', 'Keahlian berhasil ditambahkan!');
     }
 
     public function editSkill($id)
     {
         $skill = Skill::find($id);
+        if (!$skill) {
+            $this->cancelEditSkill();
+            session()->flash('msg_skill', 'Data keahlian tidak ditemukan.');
+            return;
+        }
         $this->editingSkillId = $id;
         $this->skill_name = $skill->name;
         $this->skill_category = $skill->category;
@@ -154,25 +194,61 @@ new class extends Component
 
     public function updateSkill()
     {
-        $this->validate(['skill_name' => 'required', 'skill_icon' => 'required']);
-        Skill::find($this->editingSkillId)?->update(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
+        $this->validate($this->skillRules(), $this->skillMessages());
+        $skill = Skill::find($this->editingSkillId);
+        if (!$skill) {
+            $this->cancelEditSkill();
+            session()->flash('msg_skill', 'Data sudah dihapus, edit dibatalkan.');
+            return;
+        }
+        $skill->update(['name' => $this->skill_name, 'category' => $this->skill_category, 'icon' => $this->skill_icon]);
         $this->reset(['skill_name', 'skill_icon', 'editingSkillId']);
-        session()->flash('msg_skill', 'Skill berhasil diperbarui!');
+        session()->flash('msg_skill', 'Keahlian berhasil diperbarui!');
     }
 
     public function cancelEditSkill()
     {
         $this->reset(['skill_name', 'skill_icon', 'editingSkillId']);
+        $this->skill_category = 'Web Development';
     }
 
     public function deleteSkill($id)
     {
+        if ((int) $this->editingSkillId === (int) $id) {
+            $this->cancelEditSkill();
+            session()->flash('msg_skill', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+        }
         Skill::find($id)?->delete();
     }
+
+    private function experienceRules(): array
+    {
+        return [
+            'exp_role' => 'required|string|max:255',
+            'exp_company' => 'required|string|max:255',
+            'exp_period' => 'required|string|max:100',
+            'exp_description' => 'nullable|string|max:2000',
+        ];
+    }
+
+    private function experienceMessages(): array
+    {
+        return [
+            'exp_role.required' => 'Peran / jabatan wajib diisi.',
+            'exp_company.required' => 'Organisasi / perusahaan wajib diisi.',
+            'exp_period.required' => 'Periode wajib diisi.',
+        ];
+    }
+
     public function addExperience()
     {
-        $this->validate(['exp_role' => 'required', 'exp_company' => 'required', 'exp_period' => 'required']);
-        Experience::create(['role' => $this->exp_role, 'company' => $this->exp_company, 'period' => $this->exp_period, 'description' => $this->exp_description]);
+        $this->validate($this->experienceRules(), $this->experienceMessages());
+        Experience::create([
+            'role' => $this->exp_role,
+            'company' => $this->exp_company,
+            'period' => $this->exp_period,
+            'description' => $this->blankToNull($this->exp_description),
+        ]);
         $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description']);
         session()->flash('msg_exp', 'Pengalaman berhasil ditambahkan!');
     }
@@ -180,6 +256,11 @@ new class extends Component
     public function editExperience($id)
     {
         $exp = Experience::find($id);
+        if (!$exp) {
+            $this->cancelEditExperience();
+            session()->flash('msg_exp', 'Data pengalaman tidak ditemukan.');
+            return;
+        }
         $this->editingExpId = $id;
         $this->exp_role = $exp->role;
         $this->exp_company = $exp->company;
@@ -189,8 +270,19 @@ new class extends Component
 
     public function updateExperience()
     {
-        $this->validate(['exp_role' => 'required', 'exp_company' => 'required', 'exp_period' => 'required']);
-        Experience::find($this->editingExpId)?->update(['role' => $this->exp_role, 'company' => $this->exp_company, 'period' => $this->exp_period, 'description' => $this->exp_description]);
+        $this->validate($this->experienceRules(), $this->experienceMessages());
+        $exp = Experience::find($this->editingExpId);
+        if (!$exp) {
+            $this->cancelEditExperience();
+            session()->flash('msg_exp', 'Data sudah dihapus, edit dibatalkan.');
+            return;
+        }
+        $exp->update([
+            'role' => $this->exp_role,
+            'company' => $this->exp_company,
+            'period' => $this->exp_period,
+            'description' => $this->blankToNull($this->exp_description),
+        ]);
         $this->reset(['exp_role', 'exp_company', 'exp_period', 'exp_description', 'editingExpId']);
         session()->flash('msg_exp', 'Pengalaman berhasil diperbarui!');
     }
@@ -202,14 +294,68 @@ new class extends Component
 
     public function deleteExperience($id)
     {
+        if ((int) $this->editingExpId === (int) $id) {
+            $this->cancelEditExperience();
+            session()->flash('msg_exp', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+        }
         Experience::find($id)?->delete();
     }
+
+    private function educationRules(): array
+    {
+        $rules = [
+            'edu_type' => 'required|in:education,certification',
+            'edu_title' => 'required|string|max:255',
+            'edu_subtitle' => 'required|string|max:255',
+            'edu_description' => 'nullable|string|max:2000',
+        ];
+
+        if ($this->edu_type === 'education') {
+            $rules['edu_level'] = 'required|in:university,school';
+            $rules['edu_gpa'] = 'nullable|numeric|min:0|max:4';
+            $rules['edu_eprt'] = 'nullable|numeric|min:0';
+            $rules['edu_tak'] = 'nullable|numeric|min:0';
+            $rules['edu_final_grade'] = 'nullable|numeric|min:0|max:100';
+        } else {
+            $rules['edu_certificate_link'] = 'nullable|url|max:500';
+        }
+
+        return $rules;
+    }
+
+    private function educationMessages(): array
+    {
+        return [
+            'edu_title.required' => 'Judul / nama wajib diisi.',
+            'edu_subtitle.required' => 'Subtitle / periode wajib diisi.',
+            'edu_gpa.numeric' => 'IPK harus berupa angka.',
+            'edu_gpa.max' => 'IPK maksimal 4.',
+            'edu_eprt.numeric' => 'Nilai EPRT harus berupa angka.',
+            'edu_tak.numeric' => 'Skor TAK harus berupa angka.',
+            'edu_final_grade.numeric' => 'Nilai akhir harus berupa angka.',
+            'edu_certificate_link.url' => 'Link sertifikat harus berupa URL valid (contoh: https://...).',
+        ];
+    }
+
     public function addEducation()
     {
-        $this->validate(['edu_title' => 'required', 'edu_subtitle' => 'required']);
+        $this->edu_certificate_link = $this->blankToNull($this->edu_certificate_link);
+        $this->edu_gpa = $this->blankToNull($this->edu_gpa);
+        $this->edu_eprt = $this->blankToNull($this->edu_eprt);
+        $this->edu_tak = $this->blankToNull($this->edu_tak);
+        $this->edu_final_grade = $this->blankToNull($this->edu_final_grade);
+
+        $this->validate($this->educationRules(), $this->educationMessages());
         $metrics = $this->_buildEduMetrics();
-        $certLink = $this->edu_type !== 'education' ? ($this->edu_certificate_link ?: null) : null;
-        Education::create(['type' => $this->edu_type, 'title' => $this->edu_title, 'subtitle' => $this->edu_subtitle, 'description' => $this->edu_description ?: null, 'metrics' => $metrics, 'certificate_link' => $certLink]);
+        $certLink = $this->edu_type !== 'education' ? $this->edu_certificate_link : null;
+        Education::create([
+            'type' => $this->edu_type,
+            'title' => $this->edu_title,
+            'subtitle' => $this->edu_subtitle,
+            'description' => $this->blankToNull($this->edu_description),
+            'metrics' => $metrics,
+            'certificate_link' => $certLink,
+        ]);
         $this->_resetEduForm();
         session()->flash('msg_edu', 'Pendidikan/Sertifikasi berhasil ditambahkan!');
     }
@@ -217,12 +363,21 @@ new class extends Component
     public function editEducation($id)
     {
         $edu = Education::find($id);
+        if (!$edu) {
+            $this->cancelEditEducation();
+            session()->flash('msg_edu', 'Data pendidikan/sertifikasi tidak ditemukan.');
+            return;
+        }
         $this->editingEduId = $id;
         $this->edu_type = $edu->type;
         $this->edu_title = $edu->title;
         $this->edu_subtitle = $edu->subtitle;
         $this->edu_description = $edu->description ?? '';
         $this->edu_certificate_link = $edu->certificate_link ?? '';
+        $this->edu_gpa = '';
+        $this->edu_eprt = '';
+        $this->edu_tak = '';
+        $this->edu_final_grade = '';
         if ($edu->metrics) {
             if (isset($edu->metrics['GPA'])) {
                 $this->edu_level = 'university';
@@ -238,10 +393,29 @@ new class extends Component
 
     public function updateEducation()
     {
-        $this->validate(['edu_title' => 'required', 'edu_subtitle' => 'required']);
+        $this->edu_certificate_link = $this->blankToNull($this->edu_certificate_link);
+        $this->edu_gpa = $this->blankToNull($this->edu_gpa);
+        $this->edu_eprt = $this->blankToNull($this->edu_eprt);
+        $this->edu_tak = $this->blankToNull($this->edu_tak);
+        $this->edu_final_grade = $this->blankToNull($this->edu_final_grade);
+
+        $this->validate($this->educationRules(), $this->educationMessages());
+        $edu = Education::find($this->editingEduId);
+        if (!$edu) {
+            $this->cancelEditEducation();
+            session()->flash('msg_edu', 'Data sudah dihapus, edit dibatalkan.');
+            return;
+        }
         $metrics = $this->_buildEduMetrics();
-        $certLink = $this->edu_type !== 'education' ? ($this->edu_certificate_link ?: null) : null;
-        Education::find($this->editingEduId)?->update(['type' => $this->edu_type, 'title' => $this->edu_title, 'subtitle' => $this->edu_subtitle, 'description' => $this->edu_description ?: null, 'metrics' => $metrics, 'certificate_link' => $certLink]);
+        $certLink = $this->edu_type !== 'education' ? $this->edu_certificate_link : null;
+        $edu->update([
+            'type' => $this->edu_type,
+            'title' => $this->edu_title,
+            'subtitle' => $this->edu_subtitle,
+            'description' => $this->blankToNull($this->edu_description),
+            'metrics' => $metrics,
+            'certificate_link' => $certLink,
+        ]);
         $this->_resetEduForm();
         session()->flash('msg_edu', 'Data berhasil diperbarui!');
     }
@@ -253,10 +427,13 @@ new class extends Component
 
     private function _buildEduMetrics()
     {
-        if ($this->edu_type !== 'education') return null;
+        if ($this->edu_type !== 'education') {
+            return null;
+        }
         $metrics = $this->edu_level === 'university'
-            ? array_filter(['GPA' => $this->edu_gpa, 'EPRT' => $this->edu_eprt, 'TAK Score' => $this->edu_tak])
-            : array_filter(['Final Grade' => $this->edu_final_grade]);
+            ? array_filter(['GPA' => $this->edu_gpa, 'EPRT' => $this->edu_eprt, 'TAK Score' => $this->edu_tak], fn ($v) => $v !== null && $v !== '')
+            : array_filter(['Final Grade' => $this->edu_final_grade], fn ($v) => $v !== null && $v !== '');
+
         return empty($metrics) ? null : $metrics;
     }
 
@@ -269,20 +446,66 @@ new class extends Component
 
     public function deleteEducation($id)
     {
+        if ((int) $this->editingEduId === (int) $id) {
+            $this->cancelEditEducation();
+            session()->flash('msg_edu', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+        }
         Education::find($id)?->delete();
     }
+
+    private function projectRules(): array
+    {
+        return [
+            'proj_title' => 'required|string|min:2|max:255',
+            'proj_category' => 'required|in:Web Development,Game Development,Videography',
+            'proj_description' => 'required|string|min:5|max:5000',
+            'proj_url' => 'nullable|url|max:500',
+            'proj_selected_skills' => 'nullable|array',
+            'proj_selected_skills.*' => 'string|max:100',
+            'proj_image' => 'nullable|image|max:2048',
+        ];
+    }
+
+    private function projectMessages(): array
+    {
+        return [
+            'proj_title.required' => 'Nama proyek wajib diisi.',
+            'proj_title.min' => 'Nama proyek minimal 2 karakter.',
+            'proj_description.required' => 'Deskripsi proyek wajib diisi.',
+            'proj_description.min' => 'Deskripsi minimal 5 karakter.',
+            'proj_url.url' => 'Link proyek harus berupa URL valid (contoh: https://...).',
+            'proj_category.in' => 'Kategori proyek tidak valid.',
+            'proj_image.image' => 'File harus berupa gambar.',
+            'proj_image.max' => 'Ukuran gambar maksimal 2MB.',
+        ];
+    }
+
     public function addProject()
     {
-        $this->validate(['proj_title' => 'required|min:2', 'proj_description' => 'required|min:5', 'proj_image' => 'nullable|image|max:2048']);
+        $this->proj_url = $this->blankToNull($this->proj_url);
+        $this->validate($this->projectRules(), $this->projectMessages());
         $imagePath = $this->proj_image ? $this->proj_image->store('projects', 'public') : null;
-        Project::create(['title' => $this->proj_title, 'category' => $this->proj_category, 'description' => $this->proj_description, 'url' => $this->proj_url ?: null, 'tech_stack' => array_values($this->proj_selected_skills), 'image_path' => $imagePath]);
+        Project::create([
+            'title' => $this->proj_title,
+            'category' => $this->proj_category,
+            'description' => $this->proj_description,
+            'url' => $this->proj_url,
+            'tech_stack' => array_values($this->proj_selected_skills ?? []),
+            'image_path' => $imagePath,
+        ]);
         $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image']);
+        $this->proj_category = 'Web Development';
         session()->flash('msg_proj', 'Proyek berhasil ditambahkan!');
     }
 
     public function editProject($id)
     {
         $proj = Project::find($id);
+        if (!$proj) {
+            $this->cancelEditProject();
+            session()->flash('msg_proj', 'Data proyek tidak ditemukan.');
+            return;
+        }
         $this->editingProjId = $id;
         $this->proj_title = $proj->title;
         $this->proj_category = $proj->category;
@@ -293,11 +516,25 @@ new class extends Component
 
     public function updateProject()
     {
-        $this->validate(['proj_title' => 'required|min:2', 'proj_description' => 'required|min:5', 'proj_image' => 'nullable|image|max:2048']);
+        $this->proj_url = $this->blankToNull($this->proj_url);
+        $this->validate($this->projectRules(), $this->projectMessages());
         $proj = Project::find($this->editingProjId);
-        $data = ['title' => $this->proj_title, 'category' => $this->proj_category, 'description' => $this->proj_description, 'url' => $this->proj_url ?: null, 'tech_stack' => array_values($this->proj_selected_skills)];
+        if (!$proj) {
+            $this->cancelEditProject();
+            session()->flash('msg_proj', 'Data sudah dihapus, edit dibatalkan.');
+            return;
+        }
+        $data = [
+            'title' => $this->proj_title,
+            'category' => $this->proj_category,
+            'description' => $this->proj_description,
+            'url' => $this->proj_url,
+            'tech_stack' => array_values($this->proj_selected_skills ?? []),
+        ];
         if ($this->proj_image) {
-            if ($proj->image_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($proj->image_path);
+            if ($proj->image_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($proj->image_path);
+            }
             $data['image_path'] = $this->proj_image->store('projects', 'public');
         }
         $proj->update($data);
@@ -314,6 +551,10 @@ new class extends Component
 
     public function deleteProject($id)
     {
+        if ((int) $this->editingProjId === (int) $id) {
+            $this->cancelEditProject();
+            session()->flash('msg_proj', 'Item yang sedang diedit dihapus, edit dibatalkan.');
+        }
         Project::find($id)?->delete();
     }
     #[Computed]
@@ -469,6 +710,7 @@ new class extends Component
                             <div>
                                 <label class="text-sm font-semibold text-slate-400 mb-1 block">WhatsApp</label>
                                 <input type="text" wire:model="profile_whatsapp" placeholder="62812..." class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
+                                @error('profile_whatsapp') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                         </div>
                         <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -577,6 +819,7 @@ new class extends Component
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1">Nama Skill</label>
                                 <input type="text" wire:model="skill_name" placeholder="Misal: React" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                @error('skill_name') <span class="text-red-400 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1">Kategori</label>
@@ -599,6 +842,7 @@ new class extends Component
                         <div class="lg:col-span-8 w-full">
                             <label class="text-xs text-slate-400 block mb-1">Class Icon (FontAwesome)</label>
                             <input type="text" wire:model="skill_icon" placeholder="fa-brands fa-react" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none mb-3">
+                            @error('skill_icon') <span class="text-red-400 text-xs mb-2 block">{{ $message }}</span> @enderror
                             @if($this->usedIcons->isNotEmpty())
                             <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800 space-y-2">
                                 <div class="flex flex-wrap justify-between items-center text-[10px] text-slate-400 font-semibold tracking-wider gap-2">
@@ -705,9 +949,16 @@ new class extends Component
                     </div>
                     <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-4 space-y-3">
                         <input type="text" wire:model="exp_role" placeholder="Peran / Jabatan *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                        @error('exp_role') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                         <div class="grid grid-cols-2 gap-3">
-                            <input type="text" wire:model="exp_company" placeholder="Penyelenggara / Organisasi / UKM *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
-                            <input type="text" wire:model="exp_period" placeholder="Periode (contoh: Agustus 2023 - Sekarang) *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                            <div>
+                                <input type="text" wire:model="exp_company" placeholder="Penyelenggara / Organisasi / UKM *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                                @error('exp_company') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                            </div>
+                            <div>
+                                <input type="text" wire:model="exp_period" placeholder="Periode (contoh: Agustus 2023 - Sekarang) *" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                                @error('exp_period') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                            </div>
                         </div>
                         <textarea wire:model="exp_description" placeholder="Deskripsi peran dan tanggung jawab..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none h-20"></textarea>
                         @if($editingExpId)
@@ -789,10 +1040,12 @@ new class extends Component
                                 <div>
                                     <label class="text-xs text-slate-400 block mb-1">Nama Kampus / Sekolah *</label>
                                     <input type="text" wire:model="edu_title" placeholder="contoh: Telkom University atau SMAN 12 Bandung" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                    @error('edu_title') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label class="text-xs text-slate-400 block mb-1">Periode Pendidikan *</label>
                                     <input type="text" wire:model="edu_subtitle" placeholder="contoh: July 2023 - Present atau 2020 - 2023" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                    @error('edu_subtitle') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -816,14 +1069,17 @@ new class extends Component
                                         <div>
                                             <label class="text-[10px] text-slate-400 block mb-1">IPK (GPA)</label>
                                             <input type="text" wire:model="edu_gpa" placeholder="contoh: 3.95" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs focus:border-amber-500 outline-none">
+                                            @error('edu_gpa') <span class="text-red-400 text-[10px]">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
                                             <label class="text-[10px] text-slate-400 block mb-1">Nilai EPRT</label>
                                             <input type="text" wire:model="edu_eprt" placeholder="contoh: 537" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs focus:border-amber-500 outline-none">
+                                            @error('edu_eprt') <span class="text-red-400 text-[10px]">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
                                             <label class="text-[10px] text-slate-400 block mb-1">Skor TAK</label>
                                             <input type="text" wire:model="edu_tak" placeholder="contoh: 160" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs focus:border-amber-500 outline-none">
+                                            @error('edu_tak') <span class="text-red-400 text-[10px]">{{ $message }}</span> @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -833,6 +1089,7 @@ new class extends Component
                                     <div class="max-w-xs">
                                         <label class="text-[10px] text-slate-400 block mb-1">Nilai Akhir / Rata-Rata UN / Rapor</label>
                                         <input type="text" wire:model="edu_final_grade" placeholder="contoh: 89.81" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs focus:border-amber-500 outline-none">
+                                        @error('edu_final_grade') <span class="text-red-400 text-[10px]">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             @endif
@@ -841,15 +1098,18 @@ new class extends Component
                                 <div>
                                     <label class="text-xs text-slate-400 block mb-1">Nama Sertifikasi *</label>
                                     <input type="text" wire:model="edu_title" placeholder="contoh: BNSP Competency Certificate" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                    @error('edu_title') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label class="text-xs text-slate-400 block mb-1">Bagian / Bidang yang Disertifikasi *</label>
                                     <input type="text" wire:model="edu_subtitle" placeholder="contoh: Desainer Multimedia Madya" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                    @error('edu_subtitle') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1">Link Sertifikat (URL Google Drive / Credly dll - Opsional)</label>
                                 <input type="text" wire:model="edu_certificate_link" placeholder="contoh: https://drive.google.com/file/d/..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                                @error('edu_certificate_link') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="text-xs text-slate-400 block mb-1">Deskripsi / Detail Sertifikasi (Opsional)</label>
@@ -1078,6 +1338,7 @@ new class extends Component
                         <div>
                             <label class="text-xs text-slate-400 block mb-1.5">Link Proyek (Google Drive / GitHub / URL - Opsional)</label>
                             <input type="text" wire:model="proj_url" placeholder="contoh: https://github.com/... atau https://drive.google.com/..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                            @error('proj_url') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="text-xs text-slate-400 block mb-1.5">Gambar / Thumbnail Proyek (Opsional, maks. 2MB)</label>
