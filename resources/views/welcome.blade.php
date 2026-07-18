@@ -35,6 +35,54 @@
     <!-- Panggil komponen Livewire Halaman Portofolio -->
     <livewire:portfolio-page />
 
+    <!-- Link JS logic -->
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+            });
+        }
+
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+
+        // Copy Email
+        const copyEmailBtn = document.getElementById('copyEmailBtn');
+        const copyEmailIcon = document.getElementById('copyEmailIcon');
+        if (copyEmailBtn && copyEmailIcon) {
+            copyEmailBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigator.clipboard.writeText('mnaufalmuza@student.telkomuniversity.ac.id');
+                copyEmailIcon.className = 'fa-solid fa-check text-emerald-500';
+                setTimeout(() => {
+                    copyEmailIcon.className = 'fa-regular fa-copy text-xs';
+                }, 2000);
+            });
+        }
+
+        // Scroll to Top
+        const scrollToTop = document.getElementById('scrollToTop');
+        if (scrollToTop) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 300) {
+                    scrollToTop.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+                } else {
+                    scrollToTop.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+                }
+            });
+            scrollToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+    </script>
     @livewireScripts
 </body>
 </html>
