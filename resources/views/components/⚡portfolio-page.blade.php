@@ -216,6 +216,7 @@ new class extends Component
     public function addProject()
     {
         $this->validate([
+            'proj_title' => 'required|min:2',
             'proj_description' => 'required|min:5',
             'proj_image' => 'nullable|image|max:2048',
         ]);
@@ -226,7 +227,7 @@ new class extends Component
         }
 
         Project::create([
-            'title' => $this->proj_category,
+            'title' => $this->proj_title,
             'category' => $this->proj_category,
             'description' => $this->proj_description,
             'url' => $this->proj_url ?: null,
@@ -234,7 +235,7 @@ new class extends Component
             'image_path' => $imagePath,
         ]);
 
-        $this->reset(['proj_description', 'proj_url', 'proj_selected_skills', 'proj_image']);
+        $this->reset(['proj_title', 'proj_description', 'proj_url', 'proj_selected_skills', 'proj_image']);
         session()->flash('msg_proj', 'Proyek berhasil ditambahkan!');
     }
 
@@ -968,9 +969,16 @@ new class extends Component
                     </div>
 
                     <div class="bg-slate-900/80 p-5 rounded-xl border border-slate-700 mb-6 space-y-4">
+                        <!-- 0. Nama Project -->
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1.5">Nama Project *</label>
+                            <input type="text" wire:model="proj_title" placeholder="contoh: Web Informasi Himpunan, Game Puzzle 2D, Video Dokumentasi Wisuda..." class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-amber-500 outline-none">
+                            @error('proj_title') <span class="text-red-400 text-xs">{{ $message }}</span> @enderror
+                        </div>
+
                         <!-- 1. Pilih Bidang -->
                         <div>
-                            <label class="text-xs text-slate-400 block mb-1.5">Pilih Bidang Project</label>
+                            <label class="text-xs text-slate-400 block mb-1.5">Pilih Bidang <span class="text-slate-600">(ditampilkan sebagai badge di pojok kanan atas card)</span></label>
                             <div class="flex flex-wrap gap-2">
                                 @foreach(['Web Development', 'Game Development', 'Videography'] as $cat)
                                     <button type="button" wire:click="$set('proj_category', '{{ $cat }}')"
@@ -985,25 +993,43 @@ new class extends Component
                             </div>
                         </div>
 
-                        <!-- 2. Pilih Teknologi dari Skills -->
-                        <div>
+                        <!-- 2. Pilih Teknologi dari Skills - Alpine.js untuk real-time toggle -->
+                        <div
+                            x-data="{
+                                selected: @entangle('proj_selected_skills'),
+                                toggle(name) {
+                                    const idx = this.selected.indexOf(name);
+                                    if (idx === -1) { this.selected.push(name); }
+                                    else { this.selected.splice(idx, 1); }
+                                },
+                                isSelected(name) { return this.selected.includes(name); }
+                            }"
+                        >
                             <label class="text-xs text-slate-400 block mb-1.5">Teknologi yang Dipakai <span class="text-slate-600">(dari Skills & Expertise)</span></label>
                             @if($this->skills->isEmpty())
                                 <p class="text-xs text-slate-500 italic">Belum ada skills. Tambahkan dulu di bagian Skills & Expertise.</p>
                             @else
                                 <div class="flex flex-wrap gap-2 p-3 bg-slate-950/60 rounded-lg border border-slate-800">
                                     @foreach($this->skills as $skill)
-                                        <label class="flex items-center gap-1.5 cursor-pointer px-2.5 py-1.5 rounded-lg border transition-all duration-150 text-xs font-semibold
-                                            {{ in_array($skill->name, $proj_selected_skills) ? 'bg-teal-500/20 border-teal-500/60 text-teal-300' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500' }}">
-                                            <input type="checkbox" wire:model="proj_selected_skills" value="{{ $skill->name }}" class="hidden">
-                                            <i class="{{ $skill->icon }} text-xs {{ in_array($skill->name, $proj_selected_skills) ? 'text-teal-400' : '' }}"></i>
+                                        <button
+                                            type="button"
+                                            @click="toggle('{{ $skill->name }}')"
+                                            :class="isSelected('{{ $skill->name }}')
+                                                ? 'bg-teal-500/20 border-teal-500/60 text-teal-300'
+                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-teal-500/40 hover:text-slate-300'"
+                                            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all duration-100 text-xs font-semibold cursor-pointer select-none"
+                                        >
+                                            <i
+                                                class="{{ $skill->icon }} text-xs"
+                                                :class="isSelected('{{ $skill->name }}') ? 'text-teal-400' : ''"
+                                            ></i>
                                             {{ $skill->name }}
-                                        </label>
+                                        </button>
                                     @endforeach
                                 </div>
-                                @if(!empty($proj_selected_skills))
-                                    <p class="text-[10px] text-slate-500 mt-1">Dipilih: <span class="text-teal-400 font-semibold">{{ implode(', ', $proj_selected_skills) }}</span></p>
-                                @endif
+                                <p class="text-[10px] text-slate-500 mt-1" x-show="selected.length > 0">
+                                    Dipilih: <span class="text-teal-400 font-semibold" x-text="selected.join(', ')"></span>
+                                </p>
                             @endif
                         </div>
 
