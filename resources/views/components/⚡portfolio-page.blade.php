@@ -12,11 +12,75 @@ new class extends Component
 {
     public $editMode = false;
 
+    // Profile Data
+    public $profile_name;
+    public $profile_role;
+    public $profile_bio;
+    public $profile_github;
+    public $profile_linkedin;
+
+    // Skill Form
+    public $skill_name = '';
+    public $skill_category = 'Web Development';
+    public $skill_icon = '';
+
+    public function mount()
+    {
+        $profile = Profile::first();
+        if ($profile) {
+            $this->profile_name = $profile->name;
+            $this->profile_role = $profile->role;
+            $this->profile_bio = $profile->bio;
+            $this->profile_github = $profile->github;
+            $this->profile_linkedin = $profile->linkedin;
+        }
+    }
+
     public function toggleEditMode()
     {
         $this->editMode = !$this->editMode;
     }
 
+    // --- PROFILE CRUD ---
+    public function saveProfile()
+    {
+        $profile = Profile::first();
+        if ($profile) {
+            $profile->update([
+                'name' => $this->profile_name,
+                'role' => $this->profile_role,
+                'bio' => $this->profile_bio,
+                'github' => $this->profile_github,
+                'linkedin' => $this->profile_linkedin,
+            ]);
+            session()->flash('msg_profile', 'Profile berhasil disimpan!');
+        }
+    }
+
+    // --- SKILLS CRUD ---
+    public function addSkill()
+    {
+        $this->validate([
+            'skill_name' => 'required',
+            'skill_icon' => 'required'
+        ]);
+
+        Skill::create([
+            'name' => $this->skill_name,
+            'category' => $this->skill_category,
+            'icon' => $this->skill_icon,
+        ]);
+
+        $this->reset(['skill_name', 'skill_icon']);
+        session()->flash('msg_skill', 'Skill ditambahkan!');
+    }
+
+    public function deleteSkill($id)
+    {
+        Skill::find($id)?->delete();
+    }
+
+    // --- DATA PROVIDERS ---
     #[Computed]
     public function profile()
     {
@@ -98,29 +162,34 @@ new class extends Component
                 <div class="w-full max-w-3xl p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Edit Profile</h2>
-                        <button class="bg-amber-500 text-slate-900 px-4 py-2 rounded-xl text-sm font-bold hover:bg-amber-600 transition-colors">Simpan</button>
+                        <div class="flex items-center gap-3">
+                            @if (session()->has('msg_profile'))
+                                <span class="text-green-400 text-sm font-bold animate-pulse">{{ session('msg_profile') }}</span>
+                            @endif
+                            <button wire:click="saveProfile" class="bg-amber-500 text-slate-900 px-4 py-2 rounded-xl text-sm font-bold hover:bg-amber-600 transition-colors">Simpan</button>
+                        </div>
                     </div>
                     <div class="space-y-4 text-left">
                         <div>
                             <label class="text-sm font-semibold text-slate-400 mb-1 block">Nama Lengkap</label>
-                            <input type="text" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all" value="{{ $this->profile->name }}">
+                            <input type="text" wire:model="profile_name" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-slate-400 mb-1 block">Role / Jabatan</label>
-                            <input type="text" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all" value="{{ $this->profile->role }}">
+                            <input type="text" wire:model="profile_role" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-slate-400 mb-1 block">Bio Singkat</label>
-                            <textarea class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white h-32 focus:border-amber-500 outline-none transition-all">{{ $this->profile->bio }}</textarea>
+                            <textarea wire:model="profile_bio" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white h-32 focus:border-amber-500 outline-none transition-all"></textarea>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-sm font-semibold text-slate-400 mb-1 block">GitHub URL</label>
-                                <input type="text" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all" value="{{ $this->profile->github }}">
+                                <input type="text" wire:model="profile_github" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
                             </div>
                             <div>
                                 <label class="text-sm font-semibold text-slate-400 mb-1 block">LinkedIn URL</label>
-                                <input type="text" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all" value="{{ $this->profile->linkedin }}">
+                                <input type="text" wire:model="profile_linkedin" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-all">
                             </div>
                         </div>
                     </div>
@@ -169,10 +238,38 @@ new class extends Component
             @if($editMode)
                 <div class="p-6 rounded-2xl border-2 border-dashed border-amber-500/50 bg-amber-500/5 backdrop-blur-sm">
                     <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Skills</h2>
-                        <button class="bg-amber-500 text-slate-900 px-4 py-2 rounded-xl text-sm font-bold hover:bg-amber-600 transition-colors"><i class="fa-solid fa-plus"></i> Tambah Skill</button>
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-amber-500 font-bold text-xl"><i class="fa-solid fa-pen"></i> Kelola Skills</h2>
+                            @if (session()->has('msg_skill'))
+                                <span class="text-green-400 text-sm font-bold">{{ session('msg_skill') }}</span>
+                            @endif
+                        </div>
                     </div>
                     
+                    <!-- Form Tambah Skill -->
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-700 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Nama Skill</label>
+                            <input type="text" wire:model="skill_name" placeholder="Misal: React" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Class Icon (FontAwesome)</label>
+                            <input type="text" wire:model="skill_icon" placeholder="fa-brands fa-react" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Kategori</label>
+                            <select wire:model="skill_category" class="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-white text-sm focus:border-amber-500 outline-none">
+                                <option value="Web Development">Web Development</option>
+                                <option value="Game Development">Game Development</option>
+                                <option value="Videography">Videography</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button wire:click="addSkill" class="w-full bg-teal-500 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-400 transition-colors"><i class="fa-solid fa-plus"></i> Tambah</button>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         @foreach($this->skills as $skill)
                             <div class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex items-center justify-between group">
@@ -183,7 +280,7 @@ new class extends Component
                                         <span class="text-xs text-slate-400">{{ $skill->category }}</span>
                                     </div>
                                 </div>
-                                <button class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                                <button wire:click="deleteSkill({{ $skill->id }})" wire:confirm="Yakin ingin menghapus skill ini?" class="text-red-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         @endforeach
                     </div>
